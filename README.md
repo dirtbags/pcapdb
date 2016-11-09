@@ -35,7 +35,9 @@ make install-monolithic
 
 To make your life easier, however, you should work make sure the indexing code builds cleanly by running 'make' in the 'indexer/' directory.
 
-Postgresql may install in a strange location, as noted in the 'indexer/README'. This can cause build failures in certain pip installed packages. Add 'PATH=$PATH:<pgsql_bin_path>' to the end of your 'make install' command to fix this. For me, it is: 'make install PATH=$PATH:/usr/pgsql-9.4/bin'.
+Postgresql may install in a strange location, as noted in the 'indexer/README'. This can cause build
+failures in certain pip installed packages. Add `PATH=$PATH:<pgsql_bin_path>` to the end of your
+'make install' command to fix this. For me, it is: `make install PATH=$PATH:/usr/pgsql-9.4/bin`.
 
 # Setup #
 After running 'make install', there are a few more steps to perform. 
@@ -45,13 +47,13 @@ After running 'make install', there are a few more steps to perform.
 ## DESTDIR/etc/pcapdb.cfg ##
 This is the main Pcapdb config file. You must set certain values before PcapDB will run at all.
 
-## Database Setup ## 
+## Database Setup ##
 Both capture nodes and the search head require a PostgreSQL server instance.
- - Capture Nodes expect a database named 'capture_node'
- - The search head expects to have a database named 'pcapdb'
+ - Capture Nodes expect a database named `capture_node`.
+ - The search head expects to have a database named `pcapdb`.
  - Currently (and this is likely to change soon) PcapDB expects all databases to be owned by the
    same role. The username/password for that role need to be set in pcapdb.cfg.
- - Permissions in postgresql's pg_hba.conf file will need to be set to allow that user to log in.
+ - Permissions in postgresql's `pg_hba.conf` file will need to be set to allow that user to log in.
    All nodes should be able to log into the search head's database. The capture node databases should
    only be accessible through localhost (via MD5/password) and unix socket (ident). The capture
    program uses the unix socket method to connect by default.
@@ -78,3 +80,7 @@ Head.
 # Running the system # 
 If you installed anywhere except 'in place', the system should attempt to run itself via
 supervisord.
+ - The `core/runserver` and `core/runcelery` scripts will be helpful when not running the system in
+   production.
+ - To run capture, use the capture_runner.py script: 
+   `DESTDIR/bin/python DESTDIR/core/bin/capture_runner.py`
