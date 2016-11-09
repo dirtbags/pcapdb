@@ -1,0 +1,28 @@
+#### Project Layout ####
+ indexer - Is a cmake base project that contains all the portions of the project written in C
+ core - All of the python/Django based code. 
+ design - All of the design documents for the project. This should not be included 
+	  distrobution. 
+
+PcapDB consists of multiple host nodes. There are two types of nodes:
+  Indexer - Packet indexers capture, index, and save incoming packet streams.
+  Search Head - Provides the interface for the capture system. 
+
+In theory, on a lightly loaded system, both of these functions should be combinable. This has not yet been tested.
+
+#### Requirements ####
+PcapDB is designed to work on Linux servers only. It was developed on both Redhat Enterprise and Debian systems, but its primary testbed has so far been Redhat based.
+
+sys_requirements.txt contains a list of the packages required to run and build pcapdb
+
+requirements.txt contains python/pip requirements. They can will be installed via 
+'make install'.
+
+#### Deployment ####
+For development, you can simply work with pcapdb mostly in place. To set up its
+directory structure, run 'make install DESTDIR=$(pwd)'.
+
+For actual deployment, simply run 'make install' (See README).
+
+#### Interface ####
+See the README in core/ for more information about the organization and setup of the interface.

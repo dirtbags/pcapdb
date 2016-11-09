@@ -1,0 +1,57 @@
+{% if user.is_authenticated %}
+  <li>
+      <a href="{% url 'search_head_gui:search' %}" title="Search">
+          <i class="fa fa-lg fa-fw fa-eye"></i> Search</a>
+  </li>
+  <li>
+      <a href="{% url 'search_head_gui:main' %}" title="Dashboard">
+          <i class="fa fa-lg fa-fw fa-home"></i> Dashboard</a>
+  </li>
+  {% if user.extra.is_pcapdb_admin == True %}
+    <li class="dropdown">
+        <a class="dropdown-toggle" data-toggle="dropdown" href="#">
+            <i class="fa fa-gears fa-fw"></i> Admin
+        </a>
+        <ul class="dropdown-menu dropdown-messages">
+          <li>
+            <a href="{% url 'search_head_gui:conf_sites' %}">
+              <i class="fa fa-globe"></i> Capture Sites
+            </a>
+          </li>
+          <li>
+              <a href="{% url 'search_head_gui:conf_capture_nodes' %}">
+                  <i class="fa fa-server"></i> Capture Nodes
+              </a>
+          </li>
+          <li>
+            <a href="{% url 'search_head_gui:conf_users' %}">
+              <i class="fa fa-user"></i> Users
+            </a>
+          </li>
+        </ul>
+    </li>
+  {% endif %}
+  <li class="dropdown">
+      <a class="dropdown-toggle" data-toggle="dropdown" href="#">
+          <i class="fa fa-user fa-fw"></i>  <i class="fa fa-caret-down"></i>
+      </a>
+      <ul class="dropdown-menu dropdown-user">
+        <li>
+          <a href="{% url 'search_head_gui:mytasks' %}">
+            <i class="fa fa-bomb"></i> Task Monitor
+          </a>
+        </li>
+        <li>
+          <a href="{% url 'auth:logout' %}">
+            <i class="fa fa-sign-out fa-fw"></i> Logout
+          </a>
+        </li>
+      </ul>
+      <!-- /.dropdown-user -->
+  </li>
+{% else %}
+  <li class="">
+      <a href="{% url 'auth:unauthorized' %}" title="Login">
+          <i class="fa fa-lg fa-fw fa-home"></i> <span class="menu-item-parent">Login</span></a>
+  </li>
+{% endif %}

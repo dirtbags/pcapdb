@@ -1,0 +1,2 @@
+This should contain project specific libraries.
+Generic libraries should be installed in the project virtual environment.

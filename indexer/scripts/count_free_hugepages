@@ -1,0 +1,7 @@
+#!/bin/sh
+
+# This returns the number of free hugepages. 
+
+FREE_PAGES=$(cat /proc/meminfo | grep HugePages_Free | awk '{ print $NF }')
+
+exit $FREE_PAGES

@@ -1,0 +1,14 @@
+[uwsgi]
+
+chdir       = DESTDIR/core
+module      = settings.wsgi
+home        = DESTDIR
+
+master      = true
+processes   = 10
+socket      = DESTDIR/pcapdb.sock
+chmod-socket= 664
+vacuum      = true
+# Some pcapdb requests are larger than normal, necessitating a larger than normal
+# buffer for request headers.
+buffer-size = 8192

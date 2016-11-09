@@ -1,0 +1,6 @@
+[program:pcapdb_uwsgi]
+command=/usr/local/bin/uwsgi --ini DESTDIR/etc/uwsgi.ini --uid capture --gid nginx
+autorestart=true
+user=root
+stopsignal=KILL
+

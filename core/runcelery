@@ -1,0 +1,15 @@
+#!/bin/sh
+
+QUEUES=
+
+# Capture Nodes should have a queue named after their hostname
+if grep -iq '\s*capture_node\s*=\s*true\s*' ../etc/pcapdb.cfg; then
+    QUEUES=${QUEUES},$(hostname)
+fi
+
+# Search heads should have a search_head and celery queue
+if grep -iq '\s*search_head\s*=\s*true\s*' ../etc/pcapdb.cfg; then
+    QUEUES=${QUEUES},search_head,celery
+fi
+    
+../bin/celery -A settings.celery worker -B --queue=${QUEUES} -l DEBUG --logfile=../log/celery.log

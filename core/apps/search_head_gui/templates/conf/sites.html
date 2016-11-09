@@ -1,0 +1,160 @@
+{% extends "master.html" %}
+{% block content %}
+
+<!-- row -->
+<div class="row">
+    <div class="col-xs-12 col-sm-7 col-md-7 col-lg-4">
+        <h1 class="page-header txt-color-blueDark">
+            {#  PAGE HEADER #}
+            <i class="fa-fw fa fa-server"></i>
+        <span>
+            Sites
+        </span>
+        </h1>
+    </div>
+</div>
+
+<div class="row">
+  <div class="col-md-2">
+    <div class="panel panel-success">
+      <div class="panel-heading"><a data-toggle="collapse" role="button" href="#add_site_body"
+                                    aria-expanded="true" aria-controls="#add_site_body" class="h3">
+        Create a Capture Site</a></div>
+      <div class="panel-body panel-collapse collapse in" id="add_site_body">
+        <form action="{% url "search_head_api:site_add" %}"
+              method="post" id="site_add_form">
+          {% csrf_token %}
+          <div class="form-group">
+            <input type="text" class="form-control"
+                   placeholder="Site_Name" name="name" id="site_name"/>
+          </div>
+          <div class="form-group">
+            <input type="text" class="form-control"
+                   placeholder="Group Name" name="group" id="group_name"/>
+          </div>
+          <div class="form-group">
+            <input type="text" class="form-control"
+                   placeholder="Admin Group Name" name="admin_group"
+                   id="admin_group_name"/>
+          </div>
+          <div class="form-group">
+            <button type="submit" class="btn btn-default">Create Site</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-md-8">
+    <div class="panel panel-default">
+      <div class="panel-heading">
+        <a data-toggle="collapse" role="button" href="#help_collapse"
+           aria-expanded="true" aria-controls="help_collapse"
+           title="Open/Close Panel" class="h3">
+          Help
+        </a>
+      </div>
+      <div class="panel-body panel-collapse collapse" id="help_collapse">
+        <h3>Capture Sites</h3>
+          Capture Sites group capture nodes into logical, and typically geographical groupings.
+          <ul>
+            <li>Users can only search sites for which they have group permissions.</li>
+            <li>
+              Users in the admin group for a site can modify the configuration of the
+              indexers for that site.
+            </li>
+            <li>
+              Unless you're using external groups, only site admins can add users to the site
+              groups.
+            </li>
+            <li>
+              Only site admins can add or remove indexers from a site.
+            </li>
+          </ul>
+        <strong>Sites can only be deleted when they contain no capture nodes.</strong>
+      </div>
+    </div>
+
+    {% include "libs/dt_autotable.html" with table_id="sites_table" title="Sites" %}
+  </div>
+</div>
+
+{% endblock %}
+
+{% block js %}
+
+<script type="text/javascript">
+
+  function delete_site(ev) {
+    var name = ev.target.getAttribute('name');
+
+    var data = {
+      name: name,
+      csrfmiddlewaretoken: CSRF_TOKEN
+    };
+
+    $.ajax("{% url 'search_head_api:site_delete' %}", {
+      data: data,
+      method: 'POST',
+      success: [result_alerts, function () { $('#sites_table').DataTable().ajax.reload() }]
+    })
+  }
+
+  $(document).ready(function(){
+    $('#site_add_form').ajaxForm({
+      dataType: 'json',
+      success: function (results, status, jqXHR) {
+        result_alerts(results, status, jqXHR);
+        $('#sites_table').DataTable().ajax.reload();
+      }
+    });
+
+    $('#sites_table').dataTable({
+      jqueryUI: true,
+      ajax: "{% url 'search_head_api:sites' %}",
+      dom: 't',
+      paging: false,
+      sAjaxDataProp: "data",
+      columns: [
+        {
+          data: 'name',
+          title: 'Site Name'
+        },
+        {
+          data: 'group',
+          title: 'Site Group'
+        },
+        {
+          data: 'admin_group',
+          title: 'Site Admin Group'
+        },
+        {
+          data: null,
+          sortable: false,
+          title: 'Capture Nodes',
+          className: 'item-delete',
+          render: function (data, type, set, meta) {
+            if (type != 'display')
+              return null;
+
+            if (data['capture_nodes'].length == 0) {
+              // We embed the username as the name of the button, so we can send ajax
+              // queries based on it later.
+              return '<i name="' + data.name + '" ' +
+                  'role="button"' +
+                  'class="fa fa-lg fa-fw fa-trash btn" ' +
+                  'title="Delete this site.">';
+            } else {
+              return data['capture_nodes'].length;
+            }
+          },
+          createdCell: function (td) {
+            $(td).children('i').click(delete_site)
+          }
+        }]
+    });
+  });
+
+</script>
+
+{% endblock %}

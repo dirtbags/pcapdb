@@ -1,0 +1,5 @@
+[program:pcapdb_celery]
+command=DESTDIR/bin/celery -A settings.celery worker -B --logfile=DESTDIR/log/celery.log -l DEBUG
+autorestart=true
+user=capture
+environment=PYTHONPATH="DESTDIR/core"

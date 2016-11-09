@@ -1,0 +1,58 @@
+#!/usr/bin/python3
+
+import re
+import sys
+
+infile = sys.stdin
+outfile = sys.stdout
+
+# All the protocols I typically see. More may be needed.
+prot_re = [[r'tcp',      6],
+           [r'udp',      17],
+           [r'icmp',     1],
+           [r'esp',      50],
+           [r'gre',      47],
+           [r'icmp6',    58]]
+for i in range(len(prot_re)):
+    prot_re[i][0] = re.compile(prot_re[i][0]).match
+
+def parse_proto(prot):
+    for regex, proto in prot_re:
+        if regex(prot):
+            return proto
+    raise ValueError("Unknown Protocol: %s" % prot) 
+
+def parse_ipport(p):
+    parts = p.split('.')
+    if len(parts) == 5:
+        ip = '.'.join(parts[:4])
+        port = parts[4]
+    elif len(parts) in (4,1):
+        ip = p
+        port = '0'
+    elif len(parts) == 2:
+        ip = parts[0]
+        port = parts[1] 
+    else:
+        raise ValueError("Bad ip/port: %s" % p)
+    if ip.endswith(':'):
+        ip = ip[:-1]
+    if port.endswith(':'):
+        port = port[:-1]
+
+    return ip,port
+
+line = infile.readline()
+while line:
+    try:
+        line = line.lower()
+        _,_,src,_,dst,proto = line.split(None, 5)
+        srcip,srcport = parse_ipport(src)
+        dstip,dstport = parse_ipport(dst)
+        proto = parse_proto(proto)
+        print("{0:s}|{1:s}->{2:s}|{3:s},{4:d}".format(srcip, srcport, dstip, dstport, proto), file=outfile)
+    except Exception as e:
+        print(e, file=sys.stderr)
+        print(srcip, srcport, dstip, dstport, proto, file=sys.stderr)
+
+    line = infile.readline()

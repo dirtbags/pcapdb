@@ -1,0 +1,443 @@
+{% extends "master.html" %}
+{% block content %}
+<!-- row -->
+<div class="row">
+    <div class="col-xs-12 col-sm-7 col-md-7 col-lg-4">
+        <h1 class="page-header txt-color-blueDark">
+            {#  PAGE HEADER #}
+            <i class="fa-fw fa fa-eye"></i>
+            Search
+        </h1>
+    </div>
+</div>
+
+
+{# START ROW #}
+<div class="row">
+    <div class="col-md-12">
+      <form role="form" id="search_form">
+        {% csrf_token %}
+        <div class="form-group form-inline">
+          <label class="sr-only" for="search_form-start">Start Time</label>
+          <div class="input-group">
+            <input type="text" class="form-control input-lg" id="search_form-start"
+                   title="Start Time" name="start"/>
+            <div class="input-group-addon">
+              <i id="start_help" class="help-popover fa fa-question-circle"
+                 title="Start Time"
+                 data-content="The earliest time from which to search the flows."></i>
+            </div>
+          </div>
+          to
+          <div class="input-group">
+            <label class="sr-only" for="search_form-end">End Time</label>
+            <input type="text" class="form-control input-lg" id="search_form-end"
+                   title="End Time" name="end"/>
+            <div class="input-group-addon">
+              <i id="end_help" class="help-popover fa fa-question-circle"
+                 title="End Time"
+                 data-content="The latest time from which to search the flows."></i>
+            </div>
+          </div>
+          <p class="form-control-static"> </p>
+          <label for="search_form-proto" class="sr-only">Transport Protocol</label>
+          <select class="form-control select-" id="search_form-proto" name="proto">
+            {% for sproto, label in search_protos %}
+              {% if search.proto == sproto %}
+                <option value={{ sproto }} selected>{{ label }}</option>
+              {% else %}
+                <option value={{ sproto }}>{{ label }}</option>
+              {% endif %}
+            {% endfor %}
+          </select>
+        </div>
+        <div class="form-group-lg form-inline">
+          <label for="search_form-query" class="sr-only">Search</label>
+          <input type="text" class="form-control input-lg" id="search_form-query"
+                 style="width: 80%" name="search"
+                 {% if search != None %}
+                   value="{{ search.query }}"
+                 {% else %}
+                   value=""
+                 {% endif %}
+                 placeholder="Query Parameters: src 10.154.23.1 and 192.168.3.2:80 or (src port 256)">
+          <button type="submit" name="action" value="flows" id="search_form-flows-btn"
+                  class="btn btn-primary">Search Flows</button>
+          <button type="submit" name="action" value="pcap" id="search_form-pcap-btn"
+                  class="btn btn-danger">Fetch PCAP</button>
+        </div>
+      </form>
+    </div>
+</div>
+<div class="row">
+  <div class="col-md-12">
+    <div class="well" id="search_parse_results">
+    </div>
+  </div>
+</div>
+<div class="row">
+  <div class="col-md-12">
+    {%  include "libs/dt_autotable.html" with table_id="results_table" title="Result Flows" %}
+  </div>
+</div>
+
+
+{% endblock %}
+
+{% block js %}
+
+<script type="text/javascript">
+
+    // This will be set to null if we don't know the id. Subsequent searches
+    // on the page will update it.
+    var RESULTS_URL = null;
+    var RESULTS_TASK_ID = null;
+    {% if search != None and search.type == search.T_FLOW %}
+      RESULTS_URL = "{{ search.flow_results_url }}";
+    {% endif %}
+
+    var RESULTS_SHOWN = false;
+
+    function do_search(event) {
+      // Stop the form from continuing the normal submission process.
+      event.preventDefault();
+
+      var query = $('#search_form-query').val();
+      var proto = $('#search_form-proto').val();
+      var start = $('#search_form-start').datepicker("getDate");
+      var end = $('#search_form-end').datepicker("getDate");
+
+      var data = {
+        csrfmiddlewaretoken: CSRF_TOKEN,
+        proto: proto
+      };
+
+      if (query != null) data['query'] = query;
+
+      if (start != null) data['start'] = start.toISOString();
+      if (end != null) data['end'] = end.toISOString();
+
+      if (event.target.id == 'search_form-pcap-btn') {
+        data['action'] = "pcap";
+      } else {
+        data['action'] = "flows";
+      }
+
+      $.ajax({
+        url: "{% url 'search_head_api:search' %}",
+        type: "post",
+        data: data,
+        dataType: "json",
+        success: function (results, status, jqXHR) {
+
+          result_alerts(results, status, jqXHR);
+
+          // Set the task_id for this search page so that we'll know which task to wait for.
+          if (results['task_id'] != undefined) {
+            // We're only watching for a particular task id when searching for flows.
+            RESULTS_TASK_ID = results['task_id'];
+            RESULTS_URL = results['results_url'];
+          }
+          // Reset the task check timer, and start watching tasks immediately.
+          task_check(true);
+
+
+          // Show the syntax check results (including any errors)
+          show_parse_search_results(results);
+        }
+      });
+    }
+
+    function show_search_parse_error(results) {
+      var token = results['search_error_token'];
+      var search_text = results['search'];
+
+      var results_div = $('#search_parse_results');
+
+      results_div.children().remove();
+      results_div.append($('<p>').addClass('text-danger').append(results['search_error_msg']));
+      results_div.append($('<span>')
+          .append(search_text.substring(0, token.pos[0])));
+      results_div.append($('<span>').addClass('bg-danger')
+          .append(search_text.substring(token.pos[0], token.pos[1])));
+      results_div.append($('<span>').addClass('unprocessed_search_text')
+          .append(search_text.substring(token.pos[1])));
+      results_div.parent().parent().show();
+    }
+
+    var _TOKEN_CLASSES = {
+      'OPEN_PAREN': 'text-info',
+      'CLOSE_PAREN': 'text-info',
+      'NOT': 'text-warning',
+      'AND': 'text-warning',
+      'OR': 'text-warning',
+      'SRCv4': 'text-success',
+      'DSTv4': 'text-primary',
+      'SRCv6': 'text-success',
+      'DSTv6': 'text-primary',
+      'SRCPORT': 'text-success',
+      'DSTPORT': 'text-primary'
+    };
+
+    function check_search_results(tasks, status, jqXHR) {
+      // Check each task to see if it is the one this page is looking for.
+      // Fetch and display the results table that task has completed.
+
+      var task = _TASKS_BY_ID[RESULTS_TASK_ID];
+      if (task == undefined || task.status != 'SUCCESS') {
+        return;
+      }
+
+      // We found the task we were waiting for and it's completed.
+      show_results();
+
+      // Clear this so we won't continually try to update the table.
+      RESULTS_TASK_ID = null;
+    }
+
+    function show_parse_search_results(results, status, jqXHR) {
+      // Show the results of parsing the search string.
+
+      var results_div = $('#search_parse_results');
+      results_div.children().remove();
+
+      // The expected data as defined by the parse search API.
+      var tokens = results['ps_tokens'];
+      var search = results['ps_search'];
+      var error_msg = results['ps_error_msg'];
+      var error_token = results['ps_error_token'];
+
+      // We need know where the last token we drew ended, so we can know if there is any
+      // un-parsed portion of the search to draw.
+      var last_drawn_tok_end = 0;
+
+      // Draw each of the parsed tokens, with pretty coloring.
+      for (var i=0; i < tokens.length; i++) {
+        var tok = tokens[i];
+        last_drawn_tok_end = tok.pos[1];
+
+        // If a token is an error token, draw it special.
+        if (error_token != undefined && error_token.id == tok.id) {
+          results_div.append($('<span>').addClass('bg-danger').append(error_token.context + ' '));
+        } else {
+          var tok_span = $('<span>');
+          if (_TOKEN_CLASSES[tok.type] != undefined) {
+            tok_span.addClass(_TOKEN_CLASSES[tok['type']]);
+          }
+          tok_span.append(tok.str + ' ');
+          results_div.append(tok_span);
+        }
+      }
+
+      // The error_token can also be an unparsed token. In this case some of the
+      // search won't be parsed.
+      if (error_token != undefined && last_drawn_tok_end < error_token.pos[1]) {
+          results_div.append($('<span>').addClass('bg-danger').append(error_token.context + ' '));
+          var unparsed = search.substring(error_token.pos[1]);
+          results_div.append($('<span>').addClass('text-muted').append(unparsed));
+      }
+
+      // If there is an error message, display message
+      if (error_msg != undefined) {
+        results_div.append($('<h5>').addClass('text-danger').append(error_msg))
+      }
+    }
+
+    var KNOWN_PROTOS = {
+      0: 'ipv6_hopopt',
+      1: 'icmp',
+      2: 'igmp',
+      3: 'ggp',
+      4: 'IPnIP',
+      5: 'inet_stream',
+      6: 'tcp',
+      7: 'cbt',
+      8: 'egp',
+      9: 'igp',
+      10: 'bbn-rcc-mon',
+      11: 'nvp',
+      17: 'udp'
+    };
+    function date_render(cell, cellData, rowData, row, col) {
+        var date = new Date(cellData);
+
+        var time = moment(date).format('h:mm:ss.SSSS a');
+        $(cell).html(time);
+        $(cell).attr('data-toggle','tooltip');
+        $(cell).attr("title", date.toString());
+        $(cell).attr("data-container", "body");
+    }
+
+    function show_results() {
+      var results_table = $('#results_table');
+
+      if (RESULTS_URL === null) {
+        return;
+      }
+
+      // If we've already created the datatable, just change the URL and refresh it.
+      if (RESULTS_SHOWN) {
+        results_table.DataTable().ajax.url(RESULTS_URL).load();
+        return;
+      }
+
+      RESULTS_SHOWN = true;
+
+      // Otherwise create the table from scratch.
+      results_table.parent().parent().show();
+
+      results_table.dataTable({
+          processing: true,
+          jqueryUI: true,
+          paging: true,
+          serverSide: true,
+          fnDrawCallback: function(settings) {
+              $('.date_info').tooltip('enable');
+          },
+          ajax: {
+            url: RESULTS_URL,
+            dataSrc: "flows"
+          },
+          columns: [
+          {
+            title: 'First Packet TS',
+            data: 'first_ts',
+            name: 'start_ts',
+            className: 'date_info',
+            createdCell: date_render
+          },
+          {
+            title: 'Last Packet TS',
+            data: 'last_ts',
+            name: 'end_ts',
+            className: 'date_info',
+            createdCell: date_render
+          },
+          {
+            title: 'Proto',
+            data: 'proto',
+            name: 'proto',
+            sortable: false
+          },
+          {
+            title: 'Source',
+            data: 'src_ip',
+            name: 'src_ip'
+          },
+          {
+            title: 'Destination',
+            data: 'dst_ip',
+            name: 'dst_ip'
+          },
+          {
+            title: 'sPort',
+            data: 'src_port',
+            name: 'src_port'
+          },
+          {
+            title: 'dPort',
+            data: 'dst_port',
+            name: 'dst_port'
+          },
+          {
+            title: 'Size',
+            data: 'size',
+            name: 'size'
+          },
+          {
+            title: 'Packets',
+            data: 'packets',
+            name: 'packets'
+          }
+        ]
+
+      });
+
+    } // end show_results
+
+    var _PARSE_SEARCH_TIMEOUT_ID = null;
+    var _PARSE_SEARCH_TIMEOUT = 1000;
+
+    $(document).ready(function(){
+      // Add the check_search_results function to the list of things we do for
+      // each incomming task.
+      TASK_ACTION_STACK.push(check_search_results);
+
+      $("#search_form-flows-btn,#search_form-pcap-btn").click(do_search);
+
+      $('#search_form-query').keypress(function (ev) {
+        // Clear the timeout for the timed lookup.
+        if (_PARSE_SEARCH_TIMEOUT_ID != null) {
+          clearTimeout(_PARSE_SEARCH_TIMEOUT_ID);
+        }
+
+        function do_parse_search() {
+          var query = $('#search_form-query');
+          var data = {
+            'csrfmiddlewaretoken': CSRF_TOKEN,
+            'query': query.val()
+          };
+          $.ajax("{% url 'search_head_api:parse-search' %}",
+              {
+                method: 'post',
+                data: data,
+                success: show_parse_search_results
+              }
+          )
+        }
+
+        if (ev.which == 32) {
+          // Always do the lookup when space is pressed.
+          _PARSE_SEARCH_TIMEOUT_ID = null;
+          do_parse_search();
+        } else {
+          // Also do the lookup one second after the last key is pressed.
+          _PARSE_SEARCH_TIMEOUT_ID = setTimeout(do_parse_search, _PARSE_SEARCH_TIMEOUT)
+        }
+      });
+
+      $('#results_table').parent().parent().hide();
+
+      $('#start_help').popover({
+        container: 'body',
+        trigger: 'hover'
+      });
+
+      $('#end_help').popover({
+        container: 'body',
+        trigger: 'hover'
+      });
+
+      var search_form_start = $('#search_form-start');
+      var search_form_end = $('#search_form-end');
+
+      $.timepicker.datetimeRange(
+          search_form_start,
+          search_form_end,
+          {
+            start: {
+              timeFormat: 'hh:mm:ss tt',
+              showMillisec: false,
+              showMicrosec: false
+            },
+            end: {
+              timeFormat: 'hh:mm:ss tt',
+              showMillisec: false,
+              showMicrosec: false
+            }
+          }
+      );
+
+      search_form_start.datetimepicker('setDate', new Date('{{ search.start.isoformat }}'));
+      search_form_end.datetimepicker('setDate', new Date('{{ search.end.isoformat }}'));
+
+      // Go ahead and show the results if we were given a results url at page render time.
+      if (RESULTS_URL != null) {
+        show_results();
+      }
+
+    }); // end document.ready
+
+</script>
+
+{% endblock %}

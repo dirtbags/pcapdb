@@ -1,0 +1,12 @@
+#!/usr/bin/python3
+
+import django
+os.environ.setdefault("DJANGO_SETTINGS_MODULE")
+
+path = "../../capture/"
+if path not in sys.path:
+    sys.path.append(path)
+
+django.setup()
+
+from disks.models import 

@@ -1,0 +1,7 @@
+[program:capture_runner]
+command=DESTDIR/bin/python DESTDIR/core/bin/capture_runner.py
+startsecs=5
+autorestart=true
+user=root
+environment=LD_LIBRARY_PATH='/usr/local/lib',SITE_ROOT='DESTDIR'
+stopwaitsecs=180

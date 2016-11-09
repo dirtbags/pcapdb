@@ -1,0 +1,87 @@
+{
+   Crypto_inflate_Cond
+   Memcheck:Cond
+   ...
+   fun:inflate
+   obj:/usr/lib/x86_64-linux-gnu/libcrypto.so.1.0.0
+   fun:COMP_expand_block
+   obj:/usr/lib/x86_64-linux-gnu/libssl.so.1.0.0
+   obj:/usr/lib/x86_64-linux-gnu/libssl.so.1.0.0
+   obj:/usr/lib/x86_64-linux-gnu/libssl.so.1.0.0
+   obj:/usr/lib/libpq.so.5.4
+   obj:/usr/lib/libpq.so.5.4
+   fun:PQconnectPoll
+   obj:/usr/lib/libpq.so.5.4
+   fun:PQconnectdb
+   ...
+}
+{
+   Thread_Specific_Cond_Error_stack
+   Memcheck:Cond
+   obj:/usr/lib/x86_64-linux-gnu/libssl.so.1.0.0
+   obj:/usr/lib/x86_64-linux-gnu/libssl.so.1.0.0
+   obj:/usr/lib/x86_64-linux-gnu/libssl.so.1.0.0
+   obj:/usr/lib/libpq.so.5.4
+   obj:/usr/lib/libpq.so.5.4
+   fun:PQconnectPoll
+   obj:/usr/lib/libpq.so.5.4
+   fun:PQconnectdb
+   fun:get_db_conn
+   fun:output_bucket
+   fun:output
+   fun:start_thread
+}
+
+{
+   Crypto_inflate_Value8
+   Memcheck:Value8
+   ...
+   fun:inflate
+   obj:/usr/lib/x86_64-linux-gnu/libcrypto.so.1.0.0
+   fun:COMP_expand_block
+   obj:/usr/lib/x86_64-linux-gnu/libssl.so.1.0.0
+   obj:/usr/lib/x86_64-linux-gnu/libssl.so.1.0.0
+   obj:/usr/lib/x86_64-linux-gnu/libssl.so.1.0.0
+   obj:/usr/lib/libpq.so.5.4
+   obj:/usr/lib/libpq.so.5.4
+   fun:PQ*
+   ...
+}
+
+{
+   asdfasdf
+   Memcheck:Param
+   write(buf)
+   obj:/lib/x86_64-linux-gnu/libc-2.19.so
+   fun:_IO_file_write@@GLIBC_2.2.5
+   fun:new_do_write
+   fun:_IO_do_write@@GLIBC_2.2.5
+   fun:_IO_file_xsputn@@GLIBC_2.2.5
+   fun:fwrite
+   fun:write_flow
+   fun:output_bucket
+   fun:output
+   fun:start_thread
+   fun:clone
+}
+
+{
+   libssl_static_leak
+   Memcheck:Leak
+   match-leak-kinds: reachable
+   fun:*alloc
+   ...
+   obj:/usr/lib/x86_64-linux-gnu/libcrypto.so.1.0.0
+   ...
+}
+
+{
+   libssl_static_leak2
+   Memcheck:Leak
+   match-leak-kinds: reachable
+   fun:*alloc
+   ...
+   obj:/usr/lib/libpq.so*
+   ...
+}
+

@@ -1,0 +1,24 @@
+Django==1.9
+django-hosts>=1.2
+django-auth-ldap-ng
+djangorestframework>=3.1.1
+djangorestframework-jwt>=1.5.0
+django-braces>=1.4.0
+netifaces>=0.10.4
+requests>=2.2.1
+postgres
+psutil>=3.3.0
+python-dateutil>=2.2
+ldap3
+#psycopg2>=2.6.0 
+netaddr             # required for netfields
+# This external django-postgres package is required. 
+# The official postgres fields does not support JSONB
+# https://bitbucket.org/schinckel/django-postgres/get/ee37d8ece8e4.zip
+path.py
+django-celery
+celery
+uwsgi
+validate_email
+daemonize
+zxcvbn

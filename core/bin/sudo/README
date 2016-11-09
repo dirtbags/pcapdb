@@ -1,0 +1,4 @@
+The commands in this directory are all wrappers for things meant to be run as root.
+Many of the commands themselves are rather dangerous, and the sudoers file
+format isn't flexible enough to allow us to make these safe enough for a non-root
+user to execute.

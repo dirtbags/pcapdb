@@ -1,0 +1,105 @@
+{% extends "master.html" %}
+{% block content %}
+<!-- row -->
+<div class="row">
+    <div class="col-xs-12 col-sm-7 col-md-7 col-lg-4">
+        <h1 class="page-header txt-color-blueDark">
+            {#  PAGE HEADER #}
+            <i class="fa-fw fa fa-cubes"></i>
+            My Tasks
+			<span>
+			</span>
+        </h1>
+    </div>
+</div>
+
+
+{# START ROW #}
+<div class="row">
+  <div class="col-md-12">
+  {% include "libs/dt_autotable.html" with table_id="task_table" title="My Active and Cleared Tasks" %}
+  </div>
+</div>
+
+{% endblock %}
+
+{% block js %}
+
+<script type="text/javascript">
+    $(document).ready(function(){
+        var alert_classes = {'SUCCESS': 'alert-success',
+                             'FAILURE': 'alert-danger',
+                             'INFO'   : 'alert-info',
+                             'WARNING': 'alert-warning'};
+
+        $("#task_table").dataTable({
+            serverSide: false,
+            ajax: "{% url 'task_api:dt_tasks' %}",
+            sAjaxDataProp: "data",
+            columns: [
+              {
+                title: 'Description',
+                data: 'descr'
+              },
+              {
+                title: 'Status',
+                data: 'status',
+                render: function (data, type, row, meta) {
+                  if (data == undefined || data == null) {
+                    return '<div class="alert alert-failure">error</span>'
+                  }
+                  var status = data[0];
+                  var progress = data[1];
+                  if (status == undefined || progress == undefined) {
+                    return '<div class="alert alert-failure">error</span>'
+                  }
+
+                  var aclass = 'alert-warning';
+                  if (alert_classes[status] != undefined) {
+                    aclass = alert_classes[status];
+                  }
+
+                  return '<div class="' + aclass + '">' + status + ' (' + progress + ')';
+                 }
+              },
+              {
+                title: 'Result',
+                data: 'result',
+                render: function (data, type, row, meta) {
+                  if (data == null || data == undefined) {
+                    data = {};
+                  }
+                  var msg = data['msg'];
+                  if (msg == undefined) {
+                    msg = 'No result message';
+                  }
+                  if (data['link'] != undefined && typeof data['link'] == "string") {
+                    return '<a href="' + data['link'] + '">' + msg + '</a>';
+                  } else {
+                    return msg;
+                  }
+                }
+              },
+              {
+                title: 'Started',
+                data: 'started'
+              },
+              {
+                title: 'Finished',
+                data: function (data, type, row, meta) {
+                  var task = data['task'];
+                  if (task == undefined || task == null) {
+                    return '';
+                  }
+
+                  if (task['date_done'] != undefined) {
+                    return task['date_done'];
+                  }
+                },
+              }
+            ]
+        })
+    });
+</script>
+
+{% endblock %}

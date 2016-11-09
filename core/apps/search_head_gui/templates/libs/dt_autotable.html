@@ -1,0 +1,32 @@
+{% comment %}
+  Builds the html for a data tables table inside a collapsable panel.
+  It expects the following context variables:
+    table_id - The dom id of table to create
+    title - The title to put on the table.
+    default_closed - (optional) If given, the panel is closed by default.
+{% endcomment %}
+
+<div class="panel panel-default">
+  <div class="panel-heading">
+    <a data-toggle="collapse" role="button" href="#{{ table_id }}Collapse"
+       aria-expanded="true" aria-controls="{{ table_id }}Collapse"
+       title="Open/Close Panel" class="h3">
+      {{ title }}
+    </a>
+  </div>
+  {% if default_closed %}
+    <div id="{{ table_id }}Collapse" class="panel-body panel-collapse collapse">
+  {% else %}
+    <div id="{{ table_id }}Collapse" class="panel-body panel-collapse collapse in">
+  {% endif %}
+    <table id="{{ table_id }}" class="display table table-striped table-bordered table-hover pointer"
+           style="width: 100%">
+      <thead>
+      <tr>
+      </tr>
+      </thead>
+      <tbody></tbody>
+    </table>
+  </div>
+</div>
+

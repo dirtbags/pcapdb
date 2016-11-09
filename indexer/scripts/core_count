@@ -1,0 +1,33 @@
+#!bin/python3
+
+# This program uses /proc/cpuinfo to figure out how many 
+# CPU's this system has. Unlike most other methods used 
+# to do this, this ignores virtual, hyperthreaded CPU's.
+#
+# The return value is the number of CPU's, and 0 on error.
+
+cpuinfo = open('/proc/cpuinfo').readlines()
+
+pairs = set()
+cores = None
+physical_id = None
+try:
+    for line in cpuinfo:
+        if line.startswith('physical id'):
+            if physical_id is not None:
+                exit(0)
+            physical_id = int(line.split()[-1])
+        elif line.startswith('cpu cores'):
+            if cores is not None:
+                exit(0)
+            cores = int(line.split()[-1])
+
+        if None not in (physical_id, cores):
+            pairs.add((physical_id, cores))
+            physical_id = cores = None
+
+    total_cores = sum(map(lambda p: p[1], pairs))
+except Exception:
+    exit(0)
+
+exit(total_cores)	

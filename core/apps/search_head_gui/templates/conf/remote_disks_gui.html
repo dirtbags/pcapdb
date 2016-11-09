@@ -1,0 +1,410 @@
+{% extends "master.html" %}
+{% block content %}
+
+<!-- row -->
+<div class="row">
+    <div class="col-xs-12 col-sm-7 col-md-7 col-lg-4">
+        <h1 class="page-header txt-color-blueDark">
+            {#  PAGE HEADER #}
+            <i class="fa fa-fw fa-cogs "></i>
+            Devices on {{ capnode.hostname }}
+			<span>
+			</span>
+        </h1>
+    </div>
+</div>
+
+<div class="row">
+  <div class="col-md-12">
+    {% include "libs/dt_autotable.html" with table_id="init_table" title="RAID Arrays" %}
+  </div>
+</div>
+
+<div class="row">
+  <div class="col-md-12">
+    {% include "libs/dt_autotable.html" with table_id="device_table" title="Devices" default_closed=1 %}
+  </div>
+</div>
+
+<div class="row">
+  <div class="col-md-12">
+    {% include "libs/dt_autotable.html" with table_id="empty_slots_table" title="Empty JBOD Slots" default_closed=1 %}
+  </div>
+</div>
+
+{% endblock %}
+
+{% block js %}
+
+<script type="text/javascript">
+    function locate_toggle(ev) {
+      var icon_id = ev.target.id;
+      ev.stopPropagation();
+
+      var parts = icon_id.split("__");
+      // Restore the enclosure and slot to their proper names.
+      var encl = parts[1].replace(/_/g, ':');
+      var slot = parts[2].replace('_', ' ');
+
+      var data = {enclosure: encl,
+                  slot: slot,
+                  csrfmiddlewaretoken: CSRF_TOKEN};
+
+      var icon = $('#' + icon_id);
+      function toggle_locate_class(result, textStatus, jqXHR) {
+        if (result['locate'] == true) {
+          icon.removeClass('locate-off');
+          icon.addClass('locate-on');
+        } else if (result['locate'] == false) {
+          icon.removeClass('locate-on');
+          icon.addClass('locate-off');
+        }
+      }
+      $.ajax("{% url "search_head_api:capnode_dev_locate" capnode.id %}",
+          {
+            data: data,
+            method: "POST",
+            success: [toggle_locate_class, result_alerts]
+          }
+      );
+
+
+    }
+
+    function locate_icon_html(data) {
+      if (data['slot'] == undefined ||
+          data['enclosure'] == undefined ||
+          data['locate'] == undefined) {
+        return '';
+      }
+
+      var el_id = "locate__" + data['enclosure'].replace(/:/g, '_') + '__' +
+          data['slot'].replace(' ', '_');
+
+      var icon_class;
+      if (data['locate'] == false) {
+        icon_class = 'fa fa-lg fa-fw fa-circle locate-off';
+      } else {
+        icon_class = 'fa fa-lg fa-fw fa-circle locate-on'
+      }
+
+      return '<i id="' + el_id + '" class="' + icon_class +
+             '" title="Toggle the locator light for this enclosure slot."></i>';
+    }
+
+    function load_tables() {
+      // Fetch (or re-fetch the device data for each of the device tables.
+
+      function _load_tables(result, textStatus, jqXHR) {
+        console.log(Object.keys(result['data']));
+
+        var init_table = $('#init_table').DataTable();
+        init_table.rows().remove();
+        init_table.rows.add(result['data']['init_devices']);
+        init_table.draw();
+
+        var device_table = $('#device_table').DataTable();
+        device_table.rows().remove();
+        device_table.rows.add(result['data']['devices']);
+        device_table.draw();
+
+        var empty_slots_table = $('#empty_slots_table').DataTable();
+        empty_slots_table.rows().remove();
+        empty_slots_table.rows.add(result['data']['empty_slots']);
+        empty_slots_table.draw();
+      }
+
+      $.ajax("{% url 'search_head_api:capnode_devices' capnode.id %}",
+          {
+            method: 'GET',
+            csrfmiddlewaretoken: CSRF_TOKEN,
+            success: [result_alerts, _load_tables]
+          });
+    }
+
+
+    $(document).ready(function(){
+
+      // All the buttons on the device table have a common set of options.
+      var device_btn_options = {
+        dest_attr: 'devices',
+        reloader: load_tables
+      };
+
+      $("#init_table").dataTable({
+        jqueryUI: true,
+        dom: '<"col-sm-6"B>frt<"col-sm-6"i><"col-sm-6"p>',
+        paging: false,
+        columns: [
+          {
+            'data': function (data, type, set, meta) {
+              if (data['label'] != undefined) {
+                return data['alias'] + ' (' + data['label'] + ')';
+              } else {
+                return data['alias'];
+              }
+            },
+
+            'title': 'Name'
+          },
+          {
+            data: function (data, type, set, meta) {
+              if (data['disk'] != undefined) {
+                // If this has an associated capture disk object,
+                // then use it.
+                return data['disk']['mode']
+              } else if (data['index_dev_status'] != undefined) {
+                return data['index_dev_status'];
+              }
+              return null;
+            },
+            title: 'Mode',
+            defaultContent: 'Not Registered'
+          },
+          {
+            data: 'fs',
+            title: 'File System',
+            defaultContent: 'Uninitialized'
+          },
+          {
+            data: 'state',
+            title: 'State',
+            defaultContent: 'Available'
+          },
+          {
+            data: {
+              _: 'size',
+              display: 'size_hr'
+            },
+            title: 'Size'
+          },
+          {
+            data: function (data, type, set, meta) {
+              if (data['level'] == undefined &&
+                  data['count'] == undefined) {
+                return '';
+              }
+
+              return data['level'] + ', ' + data['count'] + ' disks';
+            },
+            title: 'Configuration'
+          },
+          {
+            title: 'RAID State',
+            data: function (data, type, set, meta) {
+              var state = "";
+              if (data['array_state'] != undefined) {
+                state = data['array_state'] + ' ';
+              }
+              if (data['degraded']) {
+                state += '(degraded)';
+                if (data['rebuild_status'] != undefined) {
+                  state = '<div title="' + data['rebuild_status'] + '">' + state + "</div>"
+                }
+              }
+              return state;
+            }
+          }
+        ],
+        select: {
+          style: 'single'
+        },
+        buttons: [
+          {
+            text: "Enable",
+            titleAttr: "Enabling an initialized device tells PcapDB that it can capture to that " +
+            "disk.",
+            className: 'btn-primary',
+            action: dt_ajax_selected('name',
+                "{% url 'search_head_api:capnode_dev_activate' capnode.id %}",
+                device_btn_options
+            )
+          },
+          {
+            text: "Disable",
+            className: 'btn-primary',
+            titleAttr: "Disabling a device tells PcapDB to stop capturing to that device. The " +
+            "device will still contained previously captured data, and will still be searched.",
+            action: dt_ajax_selected('name',
+                "{% url 'search_head_api:capnode_dev_deactivate' capnode.id %}",
+                device_btn_options
+            )
+          }
+        ]
+
+      });
+
+      $("#device_table").dataTable({
+          jqueryUI: true,
+          dom: '<"col-sm-8"B>frt<"col-sm-4"i><"col-sm-6"p>',
+          paging: false,
+          'columns': [
+            {
+              data: 'alias',
+              title: 'Name'
+            },
+            {
+              title: 'State',
+              data: null,
+              render: function (data, type, set, meta) {
+                var state = data['state'];
+                if (state == undefined ||
+                    state == '') {
+                  state = 'Available';
+                }
+
+                if (type != 'display') {
+                  return state;
+                }
+
+                return locate_icon_html(data) + '<span> ' + state + '</span>';
+              },
+              createdCell: function (td, cellData, rowData, row, col) {
+                $(td).children('i').click(locate_toggle);
+              }
+            },
+            {
+              data: 'fs',
+              title: 'File System',
+              defaultContent: ''
+            },
+            {
+              data: {
+                // Use the size attribute for sorting and other reasons.
+                _: 'size',
+                // Use the human readible size otherwise.
+                display: 'size_hr'
+              },
+              title: 'Size'
+            },
+            {
+              data: function (row, type, set, meta) {
+                if (row['slot'] != undefined) {
+                  return row['enclosure'] + ", " + row['slot'];
+                } else {
+                  return "System Disk"
+                }
+              },
+              title: 'Location'
+            }
+          ],
+          select: {
+            style: 'os'
+          },
+          buttons: [
+            {
+              text: "Create RAID5",
+              className: 'btn-primary',
+              action: dt_ajax_selected('name',
+                  "{% url 'search_head_api:capnode_dev_create_raid' capnode.id %}",
+                  device_btn_options)
+            },
+            {
+              text: "Destroy RAID5",
+              titleAttr: "Destroy the RAID on the selected, disabled device. The data on the device" +
+              " will not be recoverable.",
+              className: 'destroy_button btn-danger'
+            },
+            {
+              text: "Create Index RAID",
+              className: 'btn-primary',
+              action: dt_ajax_selected('name',
+                  "{% url 'search_head_api:capnode_dev_create_index' capnode.id %}",
+                  device_btn_options)
+            },
+            {
+              text: "Add Spare",
+              className: 'btn-primary',
+              action: dt_ajax_selected('name',
+                      "{% url 'search_head_api:capnode_dev_set_spare' capnode.id %}",
+                      device_btn_options)
+            },
+            {
+              text: "Remove Spare",
+              className: 'btn-primary',
+              action: dt_ajax_selected('name',
+                      "{% url 'search_head_api:capnode_dev_remove_spare' capnode.id %}",
+                      device_btn_options)
+            },
+            {
+              text: "Initialize as Capture Disk",
+              className: 'btn-primary',
+              titleAttr: "Ready the device for capture. After a disk is initialized, it can be " +
+              "enabled.",
+              action: dt_ajax_selected('name',
+                  "{% url 'search_head_api:capnode_dev_init' capnode.id %}",
+                  device_btn_options)
+            }
+          ]
+      });
+
+      $("#empty_slots_table").dataTable({
+        jqueryUI: true,
+        dom: 'rt',
+        paging: false,
+        columns: [
+          {
+            data: function (row, type, set, meta) {
+              if (row['slot'] != undefined) {
+                return row['enclosure'] + ", " + row['slot'];
+              } else {
+                return "System Disk"
+              }
+            },
+            title: 'Location'
+          },
+          {
+            title: 'Slot Status',
+            data: 'slot_status',
+            defaultContent: ''
+          },
+          {
+            data: null,
+            title: "Locate",
+            render: function (data, type, set, meta) {
+              if(type != 'display') {
+                return data['locate'];
+              }
+              if (data['enclosure'] == undefined ||
+                  data['slot'] == undefined ) {
+                return '';
+              }
+
+              return locate_icon_html(data);
+
+            },
+            createdCell: function (td, cellData, rowData, row, col) {
+              $(td).children('i').click(locate_toggle);
+            }
+          }
+        ]
+
+      });
+
+
+      $('.destroy_button').confirm({
+        content: 'This will permanently destroy this RAID and all the data on it. It cannot be ' +
+        'undone. Are you sure?',
+        confirmButton: 'Destroy the RAID',
+        title: 'Non-Recoverable Action',
+        icon: 'fa fa-warning',
+        confirmButtonClass: 'btn-danger',
+        cancelButtonClass: 'btn-info',
+        theme: 'bootstrap',
+        confirm: function () {
+          var dt = $('#device_table').DataTable();
+          // We have to wrap our callback in this case to hand it the data table object.
+          var callback = dt_ajax_selected(
+              'name',
+              "{% url 'search_head_api:capnode_dev_destroy_raid' capnode.id %}",
+              device_btn_options
+            );
+          return callback(undefined, dt);
+        }
+      });
+
+      load_tables();
+    });
+</script>
+
+{% endblock %}

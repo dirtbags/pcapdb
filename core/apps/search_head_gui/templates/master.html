@@ -1,0 +1,191 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="description" content="">
+    <meta name="author" content="">
+
+    <title>PCAP-DB | {{ title }}</title>
+
+    {% load static from staticfiles %}
+
+    <!-- Bootstrap Core CSS -->
+    <link href="{% static 'theme/plugins/bootstrap/dist/css/bootstrap.min.css'%}" rel="stylesheet">
+
+    <!-- MetisMenu CSS -->
+    <link href="{% static 'theme/plugins/metisMenu/dist/metisMenu.min.css' %}" rel="stylesheet">
+
+    <!-- Select2 CSS -->
+    <link href="{% static 'theme/plugins/select2/dist/css/select2.min.css' %}" rel="stylesheet">
+
+    <!-- Jquery Confirm CSS -->
+    <link href="{% static 'theme/plugins/jquery-confirm/css/jquery-confirm.css' %}" rel="stylesheet">
+
+    <!-- Datatables Bootstrap CSS -->
+    <link href="{% static 'theme/plugins/datatables/media/css/jquery.dataTables.min.css' %}"
+          rel="stylesheet">
+
+    <!-- JQuery UI CSS -->
+    <link href="{% static 'theme/plugins/jquery-ui/custom-theme/jquery-ui-1.10.0.custom.css' %}" rel="stylesheet">
+    <link href="{% static 'theme/plugins/jquery-ui/jquery-ui.structure.min.css' %}" rel="stylesheet">
+    <link href="{% static 'theme/plugins/jquery-ui/jquery-ui-timepicker-addon.css' %}" rel="stylesheet">
+    <link href="{% static 'theme/css/jquery-ui.min.css' %}" rel="stylesheet">
+
+    {# Font Awesome #}
+    <link href="{% static 'theme/plugins/font-awesome/css/font-awesome.min.css' %}" rel="stylesheet" type="text/css">
+
+    <!-- Custom CSS -->
+    <link href="{% static 'theme/css/sb-admin-2.css' %}" rel="stylesheet">
+
+    {# All styles we write to override or otherwise should go in pcap_db.css #}
+    <link href="{% static 'theme/css/pcapdb.css' %}" rel="stylesheet">
+
+    <!-- For understanding and managing timezone aware times. -->
+
+    <!-- HTML5 Shim and Respond.js IE8 support of HTML5 elements and media queries -->
+    <!-- WARNING: Respond.js doesn't work if you view the page via file:// -->
+    <!--[if lt IE 9]>
+    <script src="{% static 'theme/js/html5shiv.js' %}"></script>
+    <script src="{% static 'theme/js/respond.min.js' %}"></script>
+    <script src="{% static 'theme/js/jquery-ui.min.js' %}"></script>
+    <![endif]-->
+
+    <!-- jQuery -->
+    <script src="{% static 'theme/plugins/jquery/dist/jquery.js' %}"></script>
+
+</head>
+
+<body>
+
+    <div id="wrapper">
+
+        <!-- Navigation -->
+        <nav id="headernav" class="navbar navbar-default navbar-static-top" role="navigation" style="margin-bottom: 0">
+            <div class="navbar-header">
+                <button type="button" class="navbar-toggle" data-toggle="collapse" data-target=".navbar-collapse">
+                    <span class="sr-only">Toggle navigation</span>
+                    <span class="icon-bar"></span>
+                    <span class="icon-bar"></span>
+                    <span class="icon-bar"></span>
+                </button>
+                <a class="navbar-brand" href="/">
+                    <img src="{% static 'theme/images/logo_small.png' %}" height="50"/></a>
+            </div>
+            <!-- /.navbar-header -->
+
+            <ul class="nav navbar-top-links navbar-right">
+                {% include 'master_navigation.html' %}
+
+                <!-- /.dropdown -->
+            </ul>
+            <!-- /.navbar-top-links -->
+
+            <div class="navbar-default sidebar" role="navigation">
+                <div class="sidebar-nav navbar-collapse">
+                    <ul class="nav">
+                      {% if user.is_authenticated %}
+                        <li><a href="{% url 'search_head_gui:mytasks' %}" class="menu-item-parent">
+                            <i class="fa fa-lg fa-fw fa-close pull-right"
+                               id="task-clear-all" title="Clear All Tasks"></i>
+                            <i class="fa fa-lg fa-fw fa-cubes"></i>Tasks</a>
+                        <ul class="nav nav-second-level" id="task-list"></ul></li>
+                      {% endif %}
+                        <li title="Clear All">
+                            <a class="menu-item-parent" id="alert-list-header">
+                            <i class="fa fa-lg fa-fw fa-exclamation"></i>Notices</a>
+                        <ul class="nav nav-second-level" id="alert-list"></ul></li>
+                    </ul>
+                </div>
+                <!-- /.sidebar-collapse -->
+            </div>
+            <!-- /.navbar-static-side -->
+        </nav>
+
+        <!-- Page Content -->
+        <div id="page-wrapper">
+            <div class="container-fluid">
+                {# Content must contain at least one '<div class="row"'... #}
+                {% block content%}{% endblock %}
+                <!-- /.row -->
+            </div>
+            <!-- /.container-fluid -->
+        </div>
+        <!-- /#page-wrapper -->
+
+    </div>
+    <!-- /#wrapper -->
+
+    {% csrf_token %}
+
+    {% block js %}{% endblock %}
+    <script type="text/javascript">
+        // These are constants needed by other libraries brought in below.
+        var CSRF_TOKEN = "{{ csrf_token }}";
+        var TASK_URL = "{% url 'task_api:mytasks'%}";
+
+        $(document).ready( function () {
+          // When you cleck the alert list header, it should clear all alerts.
+          $('#alert-list-header').click(clear_alerts_callback('#alert-list > li'));
+          $('#task-clear-all').click(clear_tasks);
+
+          // Set the default popover behaviour such that all popovers anchor to the body.
+          $('[data-toggle="popover"]').popover({
+            container: 'body',
+            placement: 'auto right',
+            title: 'Help'
+          });
+
+          {% if user.is_authenticated %}
+            // Check for any active tasks.
+            task_check();
+          {% endif %}
+        });
+
+    </script>
+
+    <!-- jQuery UI -->
+    <script src="{% static 'theme/plugins/jquery-ui/jquery-ui.min.js' %}"></script>
+
+    <!-- jQuery UI timepicker extension -->
+    <script src="{% static 'theme/plugins/jquery-ui/jquery-ui-timepicker-addon.js' %}"></script>
+
+    <!-- Bootstrap Core JavaScript -->
+    <script src="{% static 'theme/plugins/bootstrap/dist/js/bootstrap.min.js' %}"></script>
+
+    <!-- Metis Menu Plugin JavaScript -->
+    <script src="{% static 'theme/plugins/metisMenu/dist/metisMenu.min.js' %}"></script>
+
+    <!-- Select2 JS -->
+    <script src="{% static 'theme/plugins/select2/dist/js/select2.full.min.js' %}"></script>
+
+    <!-- Jquery Confirm -->
+    <script src="{% static 'theme/plugins/jquery-confirm/dist/jquery-confirm.min.js' %}"></script>
+
+    <!-- Moment library-->
+    <script src="{% static 'theme/plugins/moment/moment.min.js' %}"></script>
+
+    <!-- Jquery Cookie -->
+    <script src="{% static 'theme/js/jquery.cookie.js' %}"></script>
+
+    {# Datatables #}
+    <script src="{% static 'theme/plugins/datatables-new/datatables.js' %}"></script>
+    <script src="{% static 'theme/js/datatables-helpers.js' %}"></script>
+
+    {# Jquery form plugin, for more easily fetching AJAX requests. #}
+    <script src="{% static 'theme/js/jquery.form.js' %}"></script>
+
+    <!-- Custom Theme JavaScript -->
+    <script src="{% static 'theme/js/sb-admin-2.js' %}"></script>
+
+    <!-- Site JS -->
+    <script src="{% static 'theme/js/pcapdb.js' %}"></script>
+
+
+
+</body>
+
+</html>

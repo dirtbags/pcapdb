@@ -1,0 +1,106 @@
+{% extends 'master.html' %}
+{% block content %}
+<div class="row">
+	<div class="col-md-12">
+		<h2 class="page-header">
+			<i class="fa-fw fa fa-bolt"></i> {% if user.is_authenticated %}Unauthorized{% else %}Login{% endif %}
+			<span>{% if user.is_authenticated %}:
+				&nbsp;<span id="authpath"></span>{% endif %}</span>
+		</h2>
+	</div>
+</div>
+
+<div class="row">
+    <div class="col-md-6">
+        <div class="panel panel-default">
+            <div class="panel-heading">
+                <h3 class="panel-title panel-primary">{% if not user.is_authenticated %}Sign In{% else %}Access Denied{% endif %}</h3>
+            </div>
+            <div class="panel-body">
+                {% if not user.is_authenticated %}
+                <form id="login-form" role="form">
+                    {% csrf_token %}
+                    <div class="form-group input-group">
+                        <span class="input-group-addon"><i class="fa fa-user"></i></span>
+                        <input id="username" type="text" class="form-control" name="username"
+                               placeholder="Username">
+                    </div>
+                    <div class="form-group input-group">
+                        <span class="input-group-addon"><i class="fa fa-lock"></i></span>
+                        <input type="password" class="form-control" name="password" placeholder="Cryptocard Token">
+                    </div>
+                    <div id="message" class="alert alert-block alert-warning hide">
+{#                        <a class="close" data-dismiss="alert" href="#">×</a>#}
+                        <h4 class="alert-heading"><i class="fa fa-warning"></i> Login Failed</h4>
+                        <span id="message_detail"></span>
+                    </div>
+                    <div class="form-group">
+                        <button type="submit" id="form_submit_btn" class="btn btn-primary">
+                            Sign in
+                        </button>
+                    </div>
+                </form>
+                <p>
+                  <a href="{% url 'search_head_gui:forgot_password' %}">Forgot Password</a>
+                </p>
+                {% else %}
+                <div id="auth_msg" style="height: 200px;" class="padding-10">
+                    <p>Your account [{{ request.user.username }}] is not authorized to view this content.</p>
+                    <p>If you believe this message is in error please contact AskIT.</p>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+    <div class="col-md-6">
+        <div class="panel panel-default">
+            <div class="panel-heading">
+                <h3 class="panel-title panel-primary">{{ splash_title }}</h3>
+            </div>
+            <div class="panel-body">
+                {{ splash_text|safe }}
+            </div>
+        </div>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block js %}
+<script type="text/javascript">
+    $(document).ready(function() {
+        document.title = "{% if not user.is_authenticated %}Login{% else %}Unauthorized{% endif %}";
+        $("#username").focus();
+{#		$("#authpath").html(window.location.hash.substr(1));#}
+        $('#login-form').on('submit', function(e) {
+            $('#form_submit_btn').prop("disabled", true);
+            $.ajax({
+                type: 'post',
+                url: "{% url 'api_auth:login_form' %}",
+                data: $(this).serialize(),
+                success: function (response) {
+                    if ('error' in response) {
+                        $("#message").removeClass("hide").addClass("show");
+                        $("#message_detail").text(response.error);
+                        $('#form_submit_btn').prop("disabled", false);
+                    } else {
+                        $("#message").removeClass("show").addClass("hide");
+                        if (window.location.search != "") {
+                            window.location.href = window.location.search.split('next=')[1];
+                        } else {
+                            window.location.href = '/';
+                        }
+
+{#                        if (window.location.hash.substr(1) == "{% url 'auth:unauthorized' %}") {#}
+{#                            window.location.replace("/");#}
+{#                        } else {#}
+{#                            location.reload();#}
+{#                        }#}
+                    }
+                }
+            });
+            e.preventDefault();
+        });
+	});
+</script>
+{% endblock %}

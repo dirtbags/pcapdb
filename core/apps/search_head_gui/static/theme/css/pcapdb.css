@@ -1,0 +1,147 @@
+a {
+    color: #36af64;
+}
+
+a:hover {
+    color: #216a3c;
+}
+
+a.navbar-brand {
+    padding-top: 1px;
+}
+
+#alert-list-header:hover {
+    background-color: #DDD;
+    cursor: pointer;
+}
+
+#task-clear-all:hover {
+    color: darkred;
+}
+
+div.navbar-alert {
+    padding: 5px;
+    margin: 10px;
+    border: 1px solid transparent;
+    border-radius: 4px;
+    cursor: default;
+}
+
+div.navbar-alert i:hover {
+    color: grey;
+}
+
+div.navbar-alert-highlight:hover {
+    border: 1px solid;
+    /*
+    border-color: lightslategrey;
+    background-color: linen; */
+}
+
+div.navbar-alert-info {
+    color: #31708F;
+    background-color: #D9EDF7;
+    border-color: #BCE8f1;
+}
+
+div.navbar-alert-warning {
+    color: #8a6d3b;
+    background-color: #fcf8e3;
+    border-color: #faebcc;
+}
+
+div.navbar-alert-success {
+    color: #3c763d;
+    background-color: #dff0d8;
+    border-color: #d6e9c6;
+}
+
+div.navbar-alert-danger {
+    color: #a94442;
+    background-color: #f2dede;
+    border-color: #ebccd1;
+}
+
+.task-icon {
+    cursor: pointer;
+}
+
+.navbar-default {
+    color: black;
+}
+
+.locate-on {
+    color: palevioletred;
+    cursor: pointer;
+    float: right;
+
+}
+
+.locate-on:hover {
+    color: grey;
+}
+
+.locate-off {
+    color: grey;
+    cursor: pointer;
+    float: right;
+}
+
+.locate-off:hover {
+    color: palevioletred;
+}
+
+.btn-capture {
+    /*font-weight: bold;*/
+    color: black;
+}
+
+.iface-state i {
+    cursor: pointer;
+    margin-right: 0.5em;
+}
+
+.iface-enabled {
+    color: green;
+}
+
+.iface-disabled {
+    color: darkred;
+}
+
+.iface-queues span {
+    color: blue;
+    font-weight: bold;
+}
+
+.iface-queues input {
+    width: 50%;
+    display: inline-block;
+    margin-left: 2em;
+}
+
+.help-popover {
+    color: purple;
+    cursor: pointer;
+}
+
+.capnode-status i {
+    margin-right: 0.5em;
+    cursor: default;
+}
+
+.capnode-status div { margin-bottom: 0.3em; }
+.capnode-status div:last-child { margin-bottom: 0; }
+
+.capnode-status i.fa-square         { color: darkred; }
+.capnode-status i.fa-check-circle-o { color: green; }
+.capnode-status i.fa-repeat         { color: #eb9316; }
+.capnode-status i.fa-cogs           { color: #eb9316; }
+.capnode-status i.fa-circle-o       { color: darkred; }
+
+.item-delete i                      { color: darkred; }
+.user-pw-reset i                    { color: darkgoldenrod; }
+
+.fa-spin {
+    text-align: center;
+}

@@ -1,0 +1,15 @@
+This directory should contain django specific settings.
+It is equivalent to the 'proj/proj' directory in a normal django project.
+
+
+settings.py - The normal, expected django settings.py file.
+              It is actually a softlink to the real settings file, depending on
+              deployment type. Valid targets include:
+                devel.py - Settings for development.
+                prod.py - Settings for production.
+common.py - The base settings file with settings common to all deployment types.
+            The other settings file import this wholesale and alter settings.
+
+celery.py - Celery configuration
+urls.py - Primary django urls file.
+wsgi.py - WSGI server start point

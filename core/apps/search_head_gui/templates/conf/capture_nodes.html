@@ -1,0 +1,182 @@
+{% extends "master.html" %}
+{% block content %}
+
+<!-- row -->
+<div class="row">
+    <div class="col-xs-12 col-sm-7 col-md-7 col-lg-4">
+        <h1 class="page-header txt-color-blueDark">
+            {#  PAGE HEADER #}
+            <i class="fa-fw fa fa-server"></i>
+            Capture Nodes
+        <span>
+        </span>
+        </h1>
+    </div>
+</div>
+
+<div class="row">
+  <div class="col-md-4">
+    <div class="panel panel-success">
+      <div class="panel-heading"><a data-toggle="collapse" role="button" href="#add_site_body"
+                                    aria-expanded="true" aria-controls="#add_site_body" class="h3">
+        Add a Capture Node</a></div>
+      <div class="panel-body panel-collapse collapse in" id="add_site_body">
+        <form action="{% url "search_head_api:capture_node_add" %}"
+              method="post" id="capture_node_add_form">
+          {% csrf_token %}
+          <div class="form-group">
+            <label for="site_name">Site Name</label>
+            <select class="form-control" name="site" id="site_name">
+            {% for site in sites %}
+              <option value="{{ site.name }}">{{ site.name }}</option>
+            {% endfor %}
+            </select>
+          </div>
+          <div class="form-group">
+            <input type="text" class="form-control"
+                   placeholder="DNS Host Name" name="hostname" id="hostname"/>
+          </div>
+          <div class="form-group">
+            <button type="submit" class="btn btn-success">Attach Capture Node</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+
+{# START ROW #}
+<div class="row">
+  <div class="col-md-8">
+    {% include "libs/dt_autotable.html" with table_id="capnodes_table" title="Capture Node" %}
+  </div>
+</div>
+
+{% endblock %}
+
+{% block js %}
+
+<script type="text/javascript">
+
+
+  function conf_button(uri, text, classes, enabled) {
+    if (!enabled) {
+      uri = '#';
+      classes.push('disabled');
+    }
+
+    return '<span style="margin-right: 0.5em"><a role="button" ' +
+           'class="btn ' + classes.join(" ") + '" ' +
+           'href="' + uri + '"' +
+           '>' + text + '</a></span>';
+  }
+
+  var status_fields = ['capture_status',
+    'index_disk_status',
+    'capture_disk_status'];
+
+  $(document).ready(function(){
+    $('#capture_node_add_form').ajaxForm({
+      dataType: 'json',
+      success: function (results, status, jqXHR) {
+        result_alerts(results, status, jqXHR);
+        $('#capnodes_table').DataTable().ajax.reload();
+      }
+    });
+
+    $("#capnodes_table").dataTable({
+      jqueryUI: true,
+      ajax: "{% url 'search_head_api:capture_nodes' %}",
+      dom: 'T',
+      paging: false,
+      sAjaxDataProp: "data",
+      columns: [
+        {
+          data: 'site',
+          title: 'Site'
+        },
+        {
+          data: 'hostname',
+          title: 'Hostname'
+        },
+        {
+          data: 'addr',
+          title: 'IP Address'
+        },
+        {
+          data: null,
+          title: "Configure",
+          width: '30%',
+          sortable: false,
+          render: function (data, type, set, meta) {
+            if (type != 'display') {
+              return '';
+            }
+
+            var html = '';
+
+            if (data['disks_uri'] != undefined) {
+              html += conf_button(data['disks_uri'], 'Disks', ['btn-primary'], data['is_admin']);
+            }
+            if (data['ifaces_uri'] != undefined) {
+              html += conf_button(data['ifaces_uri'], 'Capture', ['btn-success'], data['is_admin']);
+            }
+            return html;
+          }
+        },
+        {
+          title: 'Status',
+          className: 'capnode-status',
+          data: 'state',
+          orderable: false,
+          searchable: false,
+          render: function (data, type, set, meta) {
+            if (type != 'display') {
+              return '';
+            }
+
+            var status_descr = ['Capture', 'Index Disk', 'Capture Disks'];
+
+            var status_icons = {'NOT_OK': 'fa-square',
+              'OK': 'fa-check-circle-o',
+              'RESTART': 'fa-repeat',
+              'REPAIRING': 'fa-cogs',
+              'DISABLED': 'fa-circle-o'};
+
+            var html = '';
+            for (var i=0; i < status_fields.length; i++) {
+              console.log(Object.keys(data));
+              var field = status_fields[i];
+              var status = data[field][0];
+              var title = data[field][1];
+              var icon = status_icons[status];
+              if (icon == undefined) {
+                icon = 'fa-question';
+                title = 'Unknown Status';
+              }
+
+              html += '<div><i name="' + field + '" ' +
+                  'class="fa fa-fw fa-lg ' + icon + '"' +
+                  'title="' + title + '"></i>' +
+                  status_descr[i] + '</div>\n';
+            }
+
+            return html;
+
+          }
+        }
+      ]
+    });
+
+    $("#add_capnode_form").ajaxForm({
+        'dataType': 'json',
+        'success': function (results, status, jqXHR) {
+            result_alerts(results, status, jqXHR);
+            $('#capnode_table').DataTable().ajax.reload();
+        }
+    });
+
+  });
+</script>
+
+{% endblock %}

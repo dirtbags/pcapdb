@@ -1,0 +1,62 @@
+#!/bin/env python3
+
+import os
+import sys
+
+
+def usage():
+    print("""{0} <enclosure> <slot> <0|1>
+{0} clear
+
+This script turns on or of locator lights on JBOD's. It must be run as root.
+
+The first calling syntax turns a light on (1) or off (0) for a particular enclosure and slot.
+The second syntax turns the lights off for all enclosures and slots.""".format(sys.argv[0]))
+    exit(1)
+
+ENCL_PATH = '/sys/class/enclosure'
+
+if os.getuid() != 0:
+    print("This must be run as root.")
+    usage()
+
+if len(sys.argv) == 2 and sys.argv[1] == 'clear':
+
+    # Clear all of the 'locate' lights.
+    for encl in os.listdir(ENCL_PATH):
+        for slot in os.listdir(os.path.join(ENCL_PATH, encl)):
+            # Some enclosures list disks by just number, but so far the only
+            # one's we've seen that we're really interested in use the 'Slot #'
+            # format.
+            if slot.startswith('Slot '):
+                with open(os.path.join(ENCL_PATH, encl, slot, 'locate'), 'wb') as locate:
+                    locate.write(b'0')
+
+elif len(sys.argv) == 4:
+    encl, slot, state = sys.argv[1:]
+
+    if state == '0':
+        state = b'0'
+    elif state == '1':
+        state = b'1'
+    else:
+        print("Invalid state ({}). Must be 0 or 1.".format(state)); usage()
+
+    # Don't let the user give us a wonky name that changes our path to something we don't want.
+    path = os.path.join(ENCL_PATH, encl, slot, 'locate')
+    if os.path.abspath(path) != path:
+        print("Invalid enclosure or slot.")
+        usage()
+
+    if not os.path.exists(path):
+        print("Invalid enclosure or slot.")
+        usage()
+
+    with open(path, 'wb') as locate:
+        locate.write(state)
+
+else:
+    print("Invalid arguments.")
+    usage()
+
+exit(0)

@@ -1,0 +1,52 @@
+# These requirements include those packages that are needed beyond those available on 
+# a general purpose Redhat EL (RHEL) 6 install. Requirements for other distributions may vary.
+
+# The version numbers listed are the versions that the system was tested on. 
+
+# Postgres provides package servers for each of their versions most major linux distributions.
+postgresql-server>=9.4
+
+# You'll need wireshark, specifically the mergecap command. We'll probably, eventually, write our own to drop this dependency.
+wireshark
+
+# ius.io is a good source for python3 RPMs 
+python >= 3.4
+# You'll need to following in the above python version
+python-devel
+python-pip 
+python-virtualenv # If you don't have a package for this, it can be obtained via pip
+
+# rabbitmq is available via EPEL.
+# On the searchhead
+rabbitmq-server>=3.1 
+
+# On indexers
+librabbitmq
+ethtool
+pfring  >= 6.2 # See Building PF-ring below.
+
+# Build Requirements
+cmake >= 2.8
+gcc
+gcc-c++  # The project doesn't contain any C++, but cmake insists
+numactl-devel
+postgresql-devel>=9.4 # See note in indexer/README-building
+openssl-devel
+libhugetlbfs-devel
+libpcap-devel
+
+#### Building PF-ring ####
+The pfring source is available at ntop.org. You'll be building some userland libraries, custom drivers for your network card, and the pfring kernel module. The latter two will be specific to you kernel version, and will have to be rebuilt and reinstalled if you update your kernel.
+
+To build pfring you'll need the following:
+bison 
+flex 
+kernel-headers
+kernel-devel
+
+Within the pfring source, run make and make install in:
+ - userland/lib
+ - kernel
+ - drivers/ZC/intel/<your_card's_driver>
+
+You should also ensure your card's driver isn't overwritten by another package automatically. RHEL has kmod-<driver> packages that should be removed, for instance.

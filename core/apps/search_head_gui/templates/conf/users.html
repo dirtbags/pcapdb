@@ -1,0 +1,309 @@
+{% extends "master.html" %}
+{% block content %}
+<!-- row -->
+<div class="row">
+    <div class="col-xs-12 col-sm-7 col-md-7 col-lg-4">
+        <h1 class="page-header txt-color-blueDark">
+            <i class="fa-fw fa fa-key"></i>
+            Users and Groups
+        </h1>
+    </div>
+</div>
+
+
+{# START ROW #}
+<div class="row">
+  <div class="col-md-2">
+    <div class="panel panel-success">
+      <div class="panel-heading"><a data-toggle="collapse" role="button" href="#add_user_body"
+                                    aria-expanded="true" aria-controls="#add_user_body" class="h3">
+                                    Create User</a></div>
+      <div class="panel-body panel-collapse collapse in" id="add_user_body">
+        <form action="{% url "search_head_api:user_add" %}"
+              method="post" id="user_add_form">
+          {% csrf_token %}
+          <div class="form-group input-group">
+            <span class="input-group-addon"><i class="fa fa-user"></i></span>
+            <input type="text" class="form-control"
+                   placeholder="User Name" name="username" id="username"/>
+          </div>
+          <div class="form-group">
+            <input type="text" class="form-control"
+                   placeholder="First Name" name="first_name" id="first_name"/>
+          </div>
+          <div class="form-group">
+            <input type="text" class="form-control"
+                   placeholder="Last Name" name="last_name" id="last_name"/>
+          </div>
+          <div class="form-group input-group">
+            <span class="input-group-addon"><i class="fa fa-envelope"></i></span>
+            <input type="text" class="form-control"
+                   placeholder="Email Address" name="email" id="email"/>
+          </div>
+          <div class="form-group">
+            <label for="user-type">User Type</label>
+            <select id="user-type" name="user_type">
+              {% for ut in user_extra.USER_TYPES %}
+                {% if ut.id == user_extra.DEFAULT_USER_TYPE %}
+                  <option selected value="{{ ut.id }}">{{ ut.name }}</option>
+                {% else %}
+                  <option value="{{ ut.id }}">{{ ut.name }}</option>
+                {% endif %}
+              {% endfor %}
+            </select>
+          </div>
+          <div class="form-group">
+            <label for="user-timezone">Timezone</label>
+            <select id="user-timezone" name="timezone">
+              {% for tz, tz_short in timezones %}
+                {% if tz == default_tz %}
+                  <option value="{{ tz }}" selected title="{{ tz }}">{{ tz_short }}</option>
+                {% else %}
+                  <option value="{{ tz }}" title="{{ tz }}">{{ tz_short }}</option>
+                {% endif %}
+              {% endfor %}
+            </select>
+          </div>
+          <div class="form-group">
+            <button type="submit" class="btn btn-default">Add User</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-md-8">
+    <div class="panel panel-default">
+      <div class="panel-heading">
+        <a data-toggle="collapse" role="button" href="#help_collapse"
+           aria-expanded="true" aria-controls="help_collapse"
+           title="Open/Close Panel" class="h3">
+          Help
+        </a>
+      </div>
+      <div class="panel-body panel-collapse collapse" id="help_collapse">
+        <h3>User Types</h3>
+        <dl>
+          {% for ut in user_extra.USER_TYPES %}
+          <dt>{{ ut.name }}</dt><dd>{{ ut.help }}</dd>
+          {% endfor %}
+        </dl>
+        <h3>User Groups</h3>
+        <p>User groups define not only what pages may be viewed, but what sites may be searched
+          and managed. Site based groups are created through the
+          <a href="{% url 'search_head_gui:conf_capture_nodes' %}">Index Management</a> page.
+        </p>
+      </div>
+    </div>
+
+    {% include "libs/dt_autotable.html" with table_id="users_table" title="Users" %}
+  </div>
+</div>
+
+{% endblock %}
+
+{% block js %}
+
+<script type="text/javascript">
+
+    function delete_user(ev) {
+      var username = ev.target.getAttribute('name');
+
+      var data = {
+        username: username,
+        csrfmiddlewaretoken: CSRF_TOKEN
+      };
+
+      $.ajax("{% url 'search_head_api:user_delete' %}", {
+        data: data,
+        method: 'POST',
+        success: [result_alerts, function () { $('#users_table').DataTable().ajax.reload() }]
+      })
+    }
+
+    function reset_user(ev) {
+      var icon_id = ev.target.id;
+      var id = icon_id.split('_')[0];
+
+      var data = {
+        id: id,
+        csrfmiddlewaretoken: CSRF_TOKEN
+      };
+
+      $.ajax("{% url 'search_head_api:user_password_reset' %}", {
+        data: data,
+        method: 'POST',
+        success: [result_alerts, function () { $('#users_table').DataTable().ajax.reload() }]
+      })
+    }
+
+    $(document).ready(function(){
+      $('#user_add_form').ajaxForm({
+        dataType: 'json',
+        success: function (results, status, jqXHR) {
+          result_alerts(results, status, jqXHR);
+          $('#users_table').DataTable().ajax.reload();
+        }
+      });
+
+      $('#users_table').dataTable({
+        jqueryUI: true,
+        ajax: "{% url 'search_head_api:users' %}",
+        dom: '<"col-sm-8"B>frt<"col-sm-4"i><"col-sm-6">',
+        paging: false,
+        sAjaxDataProp: "data",
+        select: {
+          style: 'os'
+        },
+        columns: [
+          {
+            data: 'username',
+            title: 'User'
+          },
+          {
+            data: null,
+            render: function (data, type, set, meta) {
+              return data['first_name'] + ' ' + data['last_name'];
+            },
+            title: 'Name'
+          },
+          {
+            data: 'email',
+            title: 'Email'
+          },
+          {
+            data: 'extra.timezone_name',
+            title: 'TimeZone'
+          },
+          {
+            data: 'groups',
+            title: 'Groups',
+            render: function(data, type, set, meta) {
+              if (Array.isArray(data)) {
+                var groups = [];
+                for (var i=0; i < data.length; i++) {
+                  groups.push(data[i].name);
+                }
+                return groups.join(', ');
+              }
+              return '';
+            }
+          },
+          {
+            data: null,
+            sortable: false,
+            className: 'item-delete',
+            render: function(data, type, set, meta) {
+              if (type != 'display')
+                  return null;
+
+              // We embed the username as the name of the button, so we can send ajax
+              // queries based on it later.
+              return '<i name="' + data['username'] +'" ' +
+                     'role="button"' +
+                     'class="fa fa-lg fa-fw fa-trash btn" ' +
+                     'title="Delete this user">';
+            },
+            createdCell: function (td, cellData, rowData, row, col) {
+              $(td).children('i').click(delete_user);
+            }
+          },
+          {
+            data: null,
+            sortable: false,
+            title: '',
+            className: 'user-pw-reset',
+            render: function (data, type, set, meta) {
+              if (type != 'display')
+                return null;
+
+              if (data['extra'] === undefined || data['extra'] === null) {
+                console.log('missing user extra data');
+                return '';
+              }
+
+              var user_type = data['extra']['type'];
+
+              switch (user_type) {
+                case 'BASIC':
+                  return '<i id="resetbtn_' + data['username'] +'" ' +
+                      'role="button" ' +
+                      'class="fa fa-lg fa-fw fa-refresh btn" ' +
+                      'title="Reset user\'s password.">';
+                case 'SCRIPT':
+                  return '<i id="tokenbtn_' + data['username'] +'" ' +
+                      'role="button" ' +
+                      'class="fa fa-lg fa-fw fa-refresh btn" ' +
+                      'title="Get user token.">';
+                case 'LDAP':
+                  return '';
+              }
+
+              return '';
+            },
+            createdCell: function (td, data, rowData, row, col) {
+
+              if (data['extra'] === undefined || data['extra'] === null) {
+                return;
+              }
+
+              var user_type = data['extra']['type'];
+
+              switch (user_type) {
+                case 'BASIC':
+                  $(td).children('i').click(reset_user);
+                  break;
+              }
+            }
+          }
+        ],
+        buttons: [
+          {
+            text: "Add to Group",
+            className: 'btn-primary',
+            extend: 'collection',
+            buttons: [
+            {% for grp in groups %}
+              {% if grp != "user" %}
+                {
+                  text: "{{ grp.name }}",
+                  action: dt_ajax_selected(
+                      'username',
+                      '{% url 'search_head_api:user_add_group' %}',
+                      {
+                        extra_data: {'group': "{{ grp.name }}"},
+                        dest_attr: 'usernames'
+                      })
+                },
+              {% endif %}
+            {% endfor %}
+            ]
+          },
+          {
+            text: "Remove from Group",
+            className: 'btn-danger',
+            extend: 'collection',
+            buttons: [
+              {% for grp in groups %}
+                {% if grp != "user" %}
+                  {
+                    text: "{{ grp.name }}",
+                    action: dt_ajax_selected(
+                        'username',
+                        '{% url 'search_head_api:user_remove_group' %}',
+                        {
+                          extra_data: {'group': "{{ grp.name }}"},
+                          dest_attr: 'usernames'
+                        })
+                  },
+                {% endif %}
+              {% endfor %}
+            ]
+          }
+        ]
+      })
+    });
+
+</script>
+
+{% endblock %}

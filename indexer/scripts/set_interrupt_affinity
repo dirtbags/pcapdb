@@ -1,0 +1,93 @@
+#!bin/python3
+
+# This script finds the interrupt associated with the given interface
+# and sets that interrupt to only send to the given processor. The basic 
+# assumption is that we'll be capturing from a thread that has its processor
+# affinity set to that core. 
+
+# Multi-queue interfaces are supported (<iface_name>@<queue#>, ie eth5@3).
+# For example, the interface p1p2@5 (interface p1p2, queue 5) is labeled as
+# p1p2-TxRx-5.
+# This has only been tested with ixgbe driven Intel cards.
+# Other cards/drivers may have different naming.
+
+import os
+import re
+import sys
+
+def help():
+    print("Usage: {} <iface> <core #>\n".format(sys.argv[0]))
+    print(  " Sets the interrupt mask for the given interface such that\n"
+            " the interrupts are only sent to the specified core.\n"
+            " Returns 0 on success, 1 on failure.")
+
+
+if len(sys.argv) != 3:
+    help()
+    exit(1)
+
+try: 
+    core = int(sys.argv[2])
+except ValueError:
+    exit(1)
+
+iface = sys.argv[1]
+# Check if this is a queue on a multiqueued interface.
+if '@' in iface:
+    try:
+        name, queue = iface.split('@')
+        # I'm guessing this only works fo
+        iface = '{}-TxRx-{}'.format(name, queue)
+    except:
+        exit(1)
+
+# Get the contents of the interrupts proc file, ignoring the header line.
+int_lines = open('/proc/interrupts').readlines()[1:]
+
+# Find all the numbered interrupts, and make a dictionary of them.
+int_d = {}
+for line in int_lines:
+    parts = line.strip().split()
+    int_id = parts[0]
+    int_src = parts[-1]
+
+    try:
+        if not int_id.endswith(':'):
+            continue
+        int_id = int(int_id[:-1])
+
+        int_d[int_src] = int_id
+    except:
+        continue
+
+# If we can't find the corresponding interrupt, fail.
+if iface not in int_d:
+    exit(1)
+
+# Set the correct bit for our affinity map.
+affinity = 1 << core
+
+# Translate our map into the proper format.
+# This hex bitmap of the processors, comma separated into 32 bit (8 character)
+# chunks. Set bits mean that the interrupts can go to that proc number.
+# Example:
+# 00000000,0000ffff
+# The above means that these interrupts can go to any of processor 0-15
+# Our maps will only have on bit set, such as:
+# 00000800  - Interrupts go to proc 11
+aff_map = ""
+while affinity:
+    # Add a comma to se
+    if aff_map:
+        aff_map = ',' + aff_map
+    aff_map = "{:08x}".format(affinity & 0xffffffff) + aff_map
+    affinity = affinity >> 32
+
+# Where we have to change the setting
+int_path = os.path.join('/proc/irq', str(int_d[iface]), 'smp_affinity')
+
+aff_file = open(int_path, 'w')
+aff_file.write(aff_map)
+aff_file.close()
+
+exit(0)

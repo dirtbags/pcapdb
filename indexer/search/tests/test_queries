@@ -1,0 +1,8 @@
+192.168.0.0/16:25
+10.5.4.0/255.255.255.0
+src	10.5.4.1 dst port 8080
+# Surrounding and extra white space is ok.
+  dst  ae35:bc22::0001  port   80 
+# The last item is a port #
+abcd:ef00:1000:1000:1000:1000:1000:1000:1000
+

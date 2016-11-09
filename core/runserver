@@ -1,0 +1,5 @@
+#!/bin/sh
+
+HTTP_PORT=$(grep ^http_port ../etc/pcapdb.cfg | awk -F= '{{ print $2 }}' | tr -d '[[:space:]]')
+
+../bin/python manage.py runserver $(hostname):${HTTP_PORT}

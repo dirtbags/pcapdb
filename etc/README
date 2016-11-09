@@ -1,0 +1,2 @@
+General system configuration files and templates go here. The final versions will be installed by
+make. If building in place, those final versions will end up here too.

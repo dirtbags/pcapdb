@@ -1,0 +1,20 @@
+After building, running make test in the 'build' directory
+will run a series of unit tests on the capture system. For all of 
+these tests to succeed, some additional steps are necessary.
+
+1. You will have to setup your system to at least partly
+    have the components of a live capture system. This includes:
+  a. The pcapdb/ld.so.conf file will need to be installed as
+    /etc/ld.so.d/pcapdb.conf so the system can find the 
+    pfring libraries.
+  b. The DB tests require an accessible postgreSQL database
+    with the proper tables installed. The Makefile in pcapdb/
+    has a test_db target that will accomplish this on the
+    local system (given postgres is installed). You can also
+    use a remote server. 
+2. Most of tests can run as any user, but a few (the live
+    capture tests) must be run as root.
+3. You'll need a representative PCAP file. Change the
+    soft-link in pcapdb/indexer/tests/data to point to your
+    file. Do not actually include your file in repository. A
+    PCAP file of 1-4GB in size is reasonable.

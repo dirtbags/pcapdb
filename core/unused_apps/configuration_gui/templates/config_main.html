@@ -1,0 +1,309 @@
+{% extends 'master.html' %}
+{% load json_tags %}
+{% block content %}
+<div class="row">
+	<div class="col-md-12">
+		<h2 class="page-header"><i class="fa-fw fa fa-gears"></i> System Configuration</h2>
+	</div>
+</div>
+
+<div class="row">
+    <div class="col-md-12">
+        <div class="panel panel-default">
+            <div class="panel-heading">
+                <h3 class="panel-title panel-primary">Categories</h3>
+            </div>
+            <div class="panel-body">
+                <form id="config_form">{% csrf_token %}
+                        <input type="hidden" id="key_value"/>
+                        <ul id="config_tabs" class="nav nav-tabs bordered">
+                        {% for category, count in label_counts.items %}
+                            <li id='tab_group_{{ category }}'{% if forloop.first %} class='firstconfigtab'{% endif %}>
+                                <a href='#tab{{ category }}' data-toggle='tab'>{{ category|title }}
+                                <span class='badge bg-color-blue txt-color-white'>{{ count }}</span></a>
+                            </li>
+                        {% endfor %}
+                        </ul>
+                        <div id="config_tab_content" class="tab-content padding-10">
+                            {% for group in current %}
+                                {% for category, configs in group.items %}
+                                    <div class='tab-pane fade' id='tab{{ category }}'>
+                                        <table class='table table-bordered table-striped'>
+                                            <thead>
+                                                <tr>
+                                                    <th>Key</th>
+                                                    <th>Value</th>
+                                                    <th>Last Edited By:</th>
+                                                    <th>Action</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody id='config_table_{{ category }}'>
+                                            {% for c in configs %}
+                                                <tr><td>{{ c.key }}</td>
+                                                    <td><textarea id="{{ c.key }}_value" style='width:100%;' class='form-control'>{{ c.value|pretty_json }}</textarea></td>
+                                                    <td>{{ c.modified_by }}</td>
+                                                    <td><button class='btn btn-success update-button' config-key="{{ c.key }}"><i class='fa fa-save'></i>&nbsp; Save</button>
+                                                    <button class='btn btn-danger delete-button' config-key="{{ c.key }}"><i class='fa fa-remove'></i>&nbsp; Delete</button>
+                                                    </td>
+                                                </tr>
+                                            {% endfor %}
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                {% endfor %}
+                            {% endfor %}
+                        </div>
+                        </form>
+            </div>
+        </div>
+    </div>
+</div>
+<div class="row">
+    <div class="col-md-6">
+        <div class="panel panel-default">
+            <div class="panel-heading">
+                <h3 class="panel-title panel-primary">Panel title</h3>
+            </div>
+            <div class="panel-body">
+                <form id="add_config" class="form-horizontal">
+                         {% csrf_token %}
+                            <fieldset>
+                                <div class="form-group">
+                                    <label class="col-md-2 control-label">Category</label>
+                                    <div class="col-md-10">
+                                        <textarea id="add_new_category" class="form-control" placeholder="Category" rows="4"></textarea>
+                                    </div>
+                                </div>
+                                <div class="form-group">
+                                    <label class="col-md-2 control-label">Key</label>
+                                    <div class="col-md-10">
+                                        <input id="add_new_key" class="form-control" placeholder="Key" type="text">
+                                    </div>
+                                </div>
+                                <div class="form-group">
+                                    <label class="col-md-2 control-label">Value</label>
+                                    <div class="col-md-10">
+                                        <textarea id="add_new_value" class="form-control" placeholder="Value" rows="4"></textarea>
+                                    </div>
+                                </div>
+                            </fieldset>
+                            <div class="form-actions">
+								<div class="row">
+									<div class="col-md-12">
+										<button class="btn btn-primary" id="add_new_submit">
+											<i class="fa fa-plus-circle"></i>
+											Submit
+										</button>
+									</div>
+								</div>
+							</div>
+                        </form>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-6">
+        <div class="panel panel-default">
+            <div class="panel-heading">
+                <h3 class="panel-title panel-primary">Recent Changes</h3>
+            </div>
+            <div class="panel-body">
+                <div class="panel-group" id="accordion-2">
+                {% for h in history %}
+                    <div class="panel panel-default">
+                        <div class="panel-heading">
+                            <h4 class="panel-title">
+                                <a data-toggle="collapse"
+                                   data-parent="#accordion-2"
+                                   class="collapsed"
+                                   aria-expanded="false"
+                                   href="#{{ h.key }}_panel{{ forloop.counter }}">{{ h.key }} : {{ h.timestamp }}</a></h4>
+                        </div>
+                        <div id="{{ h.key }}_panel{{ forloop.counter }}" class="panel-collapse collapse" aria-expanded="false">
+                            <div class="panel-body">
+                                <div>Current ({{ h.current_modified_by }}): {{ h.current_value }}</div>
+                                <div>Old ({{ h.previous_modified_by }}): {{ h.previous_value }}</div>
+                            </div>
+                        </div>
+                    </div>
+                {% endfor %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{#  Delete Dialog #}
+<div id="delete_dialog" class="modal fade bs-example-modal-lg" tabindex="-1" role="dialog" aria-labelledby="Delete Confirmation" aria-hidden="true">
+  <div class="modal-dialog modal-lg">
+    <div class="modal-content">
+        <div class="modal-header">
+          <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+          <h4 class="modal-title" id="deleting_key"></h4>
+        </div>
+        <div class="modal-body">
+          <div class="container-fluid">
+            <div class="row">
+                <div class="col-md-12">
+                    <p>
+                    Are you sure you want to delete this configuration setting?
+                    </p>
+                    <p>The curent value is:</p>
+                    <div><textarea id="currval" class="form-control" disabled style="width: 100%;height: 100px;"></textarea></div>
+                </div>
+            </div>
+          </div>
+        </div>
+        <div class="modal-footer">
+            <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+            <button id="confirm_delete_btn" type="button" class="btn btn-danger"><i class='fa fa-remove'></i>&nbsp;Delete</button>
+        </div>
+    </div>
+  </div>
+</div>
+{#  Update Dialog #}
+<div id="update_dialog" class="modal fade bs-example-modal-lg" tabindex="-1" role="dialog" aria-labelledby="Update Confirmation" aria-hidden="true">
+  <div class="modal-dialog modal-lg">
+    <div class="modal-content">
+        <div class="modal-header">
+          <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+          <h4 class="modal-title" id="updating_key"></h4>
+        </div>
+        <div class="modal-body">
+          <div class="container-fluid">
+            <div class="row">
+                <div class="col-md-12">
+                    <p>
+                        Are you sure you want to update this configuration setting?
+                    </p>
+                    <p>The new value will be:</p>
+                    <div><textarea id="newval" class="form-control" disabled style="width: 100%;height: 100px;"></textarea></div>
+                </div>
+            </div>
+          </div>
+        </div>
+        <div class="modal-footer">
+            <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+            <button id="confirm_update_btn" type="button" class="btn btn-success"><i class='fa fa-save'></i>&nbsp;Save</button>
+        </div>
+    </div>
+  </div>
+</div>
+
+{% endblock %}
+
+{% block js%}
+{#<script src="{{ STATIC_URL }}json-editor/jsoneditor.min.js" type="text/javascript"></script>#}
+<script src="{{ STATIC_URL }}theme/plugins/autosize/dest/autosize.min.js" type="text/javascript"></script>
+<script type="text/javascript">
+$(document).ready(function() {
+    {# basically document.ready()  #}
+    document.title = "Terminus | Config Management";
+    $("#add_new_submit").on('click', function() {
+        var config_form = $("#config_form");
+        var post_data = {};
+        post_data['category'] = $("#add_new_category").val();
+        post_data['key'] = $("#add_new_key").val();
+        post_data['value'] = $("#add_new_value").val();
+        $("#add_new_submit").prop("disabled", true).html("<i class='fa fa-plus-circle'></i>&nbsp; Please Wait...");
+        $.ajax({
+            type: 'post',
+            url: "{% url 'api_configuration:add' %}",
+            data: JSON.stringify(post_data),
+            headers: { "X-CSRFToken": config_form.find('input[name=csrfmiddlewaretoken]').first().val() },
+            dataType: 'json',
+            contentType: "application/json",
+            success: function(response) {
+                if ('errors' in response) {
+                    alert("An error occured while updating this configuration setting.");
+                } else {
+                    location.reload();
+                }
+            }
+        });
+    });
+
+
+    $("#confirm_update_btn").on('click', function() {
+        var config_form = $("#config_form");
+        var post_data = {};
+        post_data['key'] = $("#key_value").val();
+        post_data['value'] = $("#"+post_data['key'] + "_value").val();
+        var dialog = $(this);
+        $(this).prop("disabled", true).html("<i class='fa fa-save'></i>&nbsp; Please Wait...");
+        $.ajax({
+            type: 'post',
+            url: "{% url 'api_configuration:update' %}",
+            data: JSON.stringify(post_data),
+            headers: { "X-CSRFToken": config_form.find('input[name=csrfmiddlewaretoken]').first().val() },
+            dataType: 'json',
+            contentType: "application/json",
+            success: function(response) {
+                if ('errors' in response) {
+                    alert("An error occured while updating this configuration setting.");
+                } else {
+                    $('#update_dialog').modal('hide');
+                    location.reload();
+                }
+            }
+        });
+    });
+
+    $("#confirm_delete_btn").on('click', function() {
+        var config_form = $("#config_form");
+        var post_data = {};
+        post_data['key'] = $("#key_value").val();
+        var dialog = $(this);
+        $(this).prop("disabled", true).html("<i class='fa fa-danger'></i>&nbsp; Please Wait...");
+        $.ajax({
+            type: 'post',
+            url: "{% url 'api_configuration:delete' %}",
+            data: JSON.stringify(post_data),
+            headers: { "X-CSRFToken": config_form.find('input[name=csrfmiddlewaretoken]').first().val() },
+            dataType: 'json',
+            contentType: "application/json",
+            success: function(response) {
+                if ('errors' in response) {
+                    alert("An error occured while deleting this configuration setting.");
+                } else {
+                    $('#delete_dialog').modal('hide');
+                    location.reload();
+                }
+            }
+        });
+    });
+
+    var config_tabs = $("#config_tabs");
+    var counter = 0;
+    var config_tab_content = $("#config_tab_content");
+    $("#config_tabs li").on("click", function() {
+        $.each($("#config_tab_content textarea"), function () {
+            $(this).autosize();
+        });
+    });
+    $(".firstconfigtab a").click();
+    {#  Delete buttons              #}
+    $.each($('.delete-button'), function() {
+        $(this).click(function() {
+            var this_key = $(this).attr('config-key');
+            $("#key_value").val(this_key);
+            $("#currval").val($("#"+this_key+"_value").val());
+            $("#deleting_key").html(this_key);
+            $('#delete_dialog').modal('show');
+            return false;
+        });
+    });
+    {#  Update buttons              #}
+    $.each($('.update-button'), function() {
+        $(this).click(function() {
+            var this_key = $(this).attr('config-key');
+            $("#key_value").val(this_key);
+            $("#newval").val($("#"+this_key+"_value").val());
+            $("#updating_key").html(this_key);
+            $('#update_dialog').modal('show');
+            return false;
+        });
+    });
+    {#    done    #}
+});
+</script>
+{% endblock %}

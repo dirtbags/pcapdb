@@ -1,0 +1,125 @@
+#!/usr/bin/env python3
+
+# This script sets up the directories and database for testing the output
+# code for the capture indexer. It then runs a series of tests on the output
+
+
+import os
+import subprocess
+import sys
+
+sys.path.append("../../../capture")
+os.environ["DJANGO_SETTINGS_MODULE"] = "capture.settings"
+from core.apps.indexer_api.capture import *
+
+PCAP_CONV = 'fcap2pcap'
+FCAP_ORDER = 'tests/fcap_order'
+FLOW_IDX_CHK = 'tests/flow_index_check'
+SUB_IDX_CHK = 'tests/sub_index_check'
+
+TEST_CMD = "tests/idx_output_test"
+TEST_DISK = "test_disk"
+TEST_SLOT = 1
+TEST_SLOT_FN = "p{:09d}.fcap".format(TEST_SLOT)
+TEST_PATH = "/tmp/capture"
+
+
+if len(sys.argv) < 2:
+    print("Usage: {} <test_pcap_path>".format(sys.argv[0]))
+    exit(-1);
+
+wd = os.getcwd()
+while not (os.path.exists(TEST_CMD) or wd == '/'):
+    wd = os.path.realpath(os.path.join(wd, '..'))
+    TEST_CMD = os.path.join(wd, "tests/idx_output_test")
+
+if wd == '/':
+    print("Could not find test command.", TEST_CMD)
+    print("This should be run from the build/tests directory.")
+    exit(-1);
+
+# Clean out and re-create our test directories
+for bdir, subdirs, files in os.walk(TEST_PATH, topdown=False):
+    for file in files:
+        os.remove(os.path.join(bdir, file))
+    os.rmdir(bdir)
+
+cap_disk_path = os.path.join(TEST_PATH, 'capture_disks', TEST_DISK)
+os.makedirs(cap_disk_path)
+index_path = os.path.join(TEST_PATH, 'index')
+os.makedirs(index_path)
+test_slot = os.path.join(TEST_PATH, 'capture_disks', TEST_DISK, TEST_SLOT_FN) 
+# Touch the test slot file.
+test_slot_file = open(test_slot, 'w')
+test_slot_file.write(' ')
+test_slot_file.close()
+
+# Now make the appropriate database entries.
+matches = Disk.objects.filter(uuid=TEST_DISK).all()
+if not matches:
+    disk = Disk()
+    disk.uuid = TEST_DISK
+    disk.mode = 'ACTIVE'
+    disk.enclosure = disk.slot = 0
+    disk.size = 1
+    disk.usage_inc = 1
+    disk.usage = 35
+    disk.save()
+else:
+    disk = matches[0]
+
+matches = CaptureSlot.objects.filter(disk=disk, slot_id=1)
+if not matches:
+    slot = CaptureSlot()
+    slot.disk = disk
+    slot.slot_id = 1
+    slot.save()
+
+test_cmd = [os.path.join(wd,TEST_CMD), '-t', sys.argv[1]]
+if (subprocess.call(test_cmd) != 0):
+    print("{} did not run successfully.".format(test_cmd))
+    exit(-1);
+
+# Convert the fcap file into a 'pcap' file. 
+# This mainly just truncates the file to it's actual size.
+output_test_pcap = os.path.join('/tmp', 'output_test.pcap')
+# Make sure we don't end up testing some old file.
+if os.path.exists(output_test_pcap):
+    os.unlink(output_test_pcap)
+pcap_conv_cmd = [os.path.join(wd, PCAP_CONV), '-r', test_slot, 
+                 '-w', output_test_pcap]
+if (subprocess.call(pcap_conv_cmd) != 0):
+    print("{} did not run successfully.".format(pcap_conv_cmd))
+    exit(-1)
+
+# Check that the fcap file is in a reasonable order. 
+print("Checking fcap file packet order."); sys.stdout.flush()
+order_chk = [os.path.join(wd, FCAP_ORDER), output_test_pcap]
+if (subprocess.call(order_chk) != 0):
+    print("Bad FCAP file order.")
+    exit(-1)
+
+# Get the most recent index entry
+index_id = Index.objects.order_by('-id').first()
+if index_id is None:
+    print("Could not get latest index entry.")
+    exit(-1)
+
+idx_path = os.path.join(TEST_PATH, 'index', '{:020d}'.format(index_id.id))
+flow_idx_path = os.path.join(idx_path, 'FLOW')
+
+# Run the flow index checking test on the output pcap and flow index.
+print("Checking flow index."); sys.stdout.flush()
+flow_idx_chk = [os.path.join(wd, FLOW_IDX_CHK), flow_idx_path, test_slot]
+if (subprocess.call(flow_idx_chk) != 0):
+    print("{} did not run successfully".format(flow_idx_chk))
+    exit(-1)
+
+# Run the sub-index checking test on all of the indices. 
+print("Checking sub-indexes."); sys.stdout.flush()
+sub_idx_chk = [os.path.join(wd, SUB_IDX_CHK), idx_path]
+if (subprocess.call(sub_idx_chk) != 0):
+    print("{} did not run successfully".format(sub_idx_chk))
+    exit(-1)
+
+exit(0)

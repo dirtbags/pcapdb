@@ -1,0 +1,5 @@
+This app is for components that are common between both the capture_nodes and the search head, but
+are directly a piece of neither.
+
+So far, all it holds is a management script that allows for making migrations on all installed
+apps.

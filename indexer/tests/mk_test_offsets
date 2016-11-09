@@ -1,0 +1,54 @@
+#!/usr/bin/python3
+
+import os
+import struct
+
+MAX_OFFSET = 100000
+OUT_DIR = 'data/subindex_offsets'
+
+# Create five test output files, each containing a different sequence of numbers between 0 and 
+# MAX_OFFSET:
+# 1_r_1 - Every number
+# 1_r_2 - Every multiple of 2
+# 1_r_3 - Every multiple of 3
+# 1_i_4 - Every multiple of 4 (inverted)
+# 1_i_5 - Every multiple of 5 (inverted)
+#
+# It also generates two results files
+# AND_results - The result of the AND (intersection) of all the above files. This file should contain every multiple of 6 that is not a multiple of 4 or 5, since the 4 and 5 files are inverted.
+# OR_results - The result of an OR (union) of just the 2, 3, and 5 files. This should contain all
+#              multiples of 2, 3 and 5.
+
+
+sets = [set([i for i in range(0,MAX_OFFSET,skip)]) for skip in (1,2,3,4,5)]
+
+# The filenames are a bit odd, but realistic.
+# 5 - SRCPORT key type, see indexer/show_keys)
+# r/i - not inverted, inverted (not'd)
+# The last number is the key that would have been searched for.
+out_fns = ['5_r_1', '5_r_2', '5_r_3', '5_i_4', '5_i_5']
+outfiles = [open(os.path.join(OUT_DIR,out_fns[i]),'wb') for i in range(5)]
+
+for i in range(5):
+    sets[i].remove(0)
+    outfile = outfiles[i]
+    for v in sorted(sets[i]):
+        outfile.write(struct.pack('<I', v))
+    outfile.close()
+
+and_result = sets[0].intersection(sets[1], sets[2])
+not_and_result = sets[3].union(sets[4])
+and_result = and_result.difference(not_and_result)
+
+or_result = sets[1].union(sets[2], sets[3])
+
+
+and_outfile = open(os.path.join(OUT_DIR, 'and_results'),'wb')
+for v in sorted(and_result):
+    and_outfile.write(struct.pack('<I', v))
+and_outfile.close()
+
+or_outfile = open(os.path.join(OUT_DIR, 'or_results'),'wb')
+for v in sorted(or_result):
+    or_outfile.write(struct.pack('<I', v))
+or_outfile.close()

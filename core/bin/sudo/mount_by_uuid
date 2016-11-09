@@ -1,0 +1,75 @@
+#!/bin/env python3
+
+import os
+import shutil
+import stat
+import subprocess
+import sys
+import tempfile
+import time
+import uuid
+
+MOUNT_CMD = '/bin/mount'
+UDEVADMIN_CMD = '/sbin/udevadm'
+CAPTURE_GROUP = 'capture'
+
+dirname = os.path.dirname
+PCAPDB_PATH = os.path.abspath(dirname(dirname(dirname(dirname(__file__)))))
+
+
+def usage():
+    print("Usage: mount_by_uuid <device UUID> [-i]\n\n"
+          "Mount the given device, identified by it's UUID. With '-i', the \n"
+          "UUID is assumed to be a capture disk, and mounted to a directory\n"
+          "named based on the UUID. Otherwise it isn mounted to the index\n"
+          "directory.\n")
+
+if os.getuid() != 0:
+    print("This must be run as root.")
+
+if len(sys.argv) not in (2, 3):
+    usage()
+    exit(1)
+
+# Verify that the first argument is in fact a UUID
+try:
+    uuid = str(uuid.UUID(sys.argv[1]))
+except ValueError:
+    usage()
+    exit(1)
+
+if '-i' in sys.argv[2:]:
+    # We're mounting the index filesystem
+    mount_point = os.path.join(PCAPDB_PATH, 'capture', 'index')
+else:
+    mount_point = os.path.join(PCAPDB_PATH, 'capture', uuid)
+
+
+uuid_path = os.path.join('/dev/disk/by-uuid', uuid)
+
+# Ensure udev as up to date softlinks created for all know filesystems. We'll be
+# mounting by UUID, so those links must exist.
+subprocess.call([UDEVADMIN_CMD, 'trigger'])
+
+if not os.path.exists(uuid_path):
+    # If the disk doesn't exist yet, wait one second and try again.
+    start = time.time()
+    while (not os.path.exists(uuid_path)) and (time.time() - 1 < start):
+        time.sleep(.05)
+
+    if not os.path.exists(uuid_path):
+        raise RuntimeError("Disk {} does not exist.".format(uuid_path))
+
+# Make our target directory if it doesn't exist.
+# We assume the basic directory structure exists, though.
+# We also assume we have permission to write here.
+if not os.path.exists(mount_point):
+    os.mkdir(mount_point)
+
+# Mount the disk
+mount_cmd = [MOUNT_CMD, '-t', 'xfs', uuid_path, mount_point]
+if subprocess.call(mount_cmd) != 0:
+    raise RuntimeError("Could not mount device {}.".format(uuid))
+
+shutil.chown(mount_point, group=CAPTURE_GROUP)
+os.chmod(mount_point, stat.S_IRWXU | stat.S_IRWXG, follow_symlinks=False)

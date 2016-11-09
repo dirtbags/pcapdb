@@ -1,0 +1,27 @@
+# Octet too large
+10.256.3.4
+# Mask too large
+10.1.1.1/33
+# Mask too small
+10.1.1.1/0
+# Invalid Mask
+10.1.1.1/255.0.0.1
+# Mask octet too large
+10.1.1.1/255.256.0.0
+# Non hex character
+abcd:efgh::0001
+# Too many groups
+abcd:ef00:1000:1000:1000:1000:1000:1000:1000:10
+# Invalid port
+port 0
+# Invalid port (Ports max out at 2^16 - 1
+src port 65536
+# To many specifiers
+src dst port port 25
+# To many specifiers
+src dst 10.1.1.1
+10.1.1.1/255.255.255.0/23
+10.1.1.1/23/255.255.255.0
+10.1.1.1/255.0.0.0/255.255.255.0
+10.1.1.1/23/23
+10.1.1.1:23:23

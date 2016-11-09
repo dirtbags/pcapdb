@@ -1,0 +1,410 @@
+{% extends "master.html" %}
+{% block content %}
+    <!-- row -->
+    <div class="row">
+        <div class="col-xs-12 col-sm-7 col-md-7 col-lg-4">
+            <h1 class="page-header txt-color-blueDark">
+                {#  PAGE HEADER #}
+                <i class="fa-fw fa fa-bar-chart"></i>
+                Dashboard
+			<span>
+			</span>
+            </h1>
+        </div>
+    </div>
+
+    <div class="row">
+      <div class="col-lg-10">
+        <ul class="nav nav-tabs" role="tablist">
+          <li role="presentation" class="active">
+            <a data-toggle="tab" href="#bygroup-panel" role="tab" id="bygroup-tab"
+               aria-controls="bygroup-panel">Captured Per Group</a>
+          </li>
+          <li role="presentation">
+            <a data-toggle="tab" href="#bystat-panel" role="tab" id="bystat-tab"
+               aria-controls="bystat-panel">Captured Per Type</a>
+          </li>
+        </ul>
+        <div class="tab-content">
+          <div role="tabpanel" class="tab-pane active" id="bygroup-panel">
+            <div class="chartdiv" id="bygroup-div" style="width: 100%; height: 400px; " ></div>
+            <form class="form-inline">
+              <div class="form-group">
+                <label for="bygroup-start">Start</label>
+                <input type="text" name="start" id="bygroup-start" value=""/>
+              </div>
+              <div class="form-group">
+                <label for="bygroup-end">End</label>
+                <input type="text" name="end" id="bygroup-end" value=""/>
+              </div>
+              <div class="form-group">
+                <select class="form-control" title="Site" name="site"
+                        id="bygroup-site">
+                  <option value="" selected>All Sites</option>
+                  {% for site in sites %}
+                    <option value="{{ site.id }}">{{ site.name }}</option>
+                  {% endfor %}
+                </select>
+              </div>
+              <div class="form-group">
+                <select class="form-control" title="Capture Node"
+                        name="capture_node" id="bygroup_capturenode">
+                  <option value="" selected>All Capture Nodes</option>
+                  {% for node in capture_nodes %}
+                    <option value="{{ node.id }}">{{ node.hostname }}</option>
+                  {% endfor %}
+                </select>
+              </div>
+              <div class="form-group">
+                <select title="Interface" class="form-control"
+                        name="interface" id="bygroup-iface">
+                  <option value="" selected>All Interfaces</option>
+                  {% for iface_id, iface_name in interfaces %}
+                    <option value="{{ iface_id }}">{{ iface_name }}</option>
+                  {% endfor %}
+                </select>
+              </div>
+            </form>
+          </div>
+          <div role="tabpanel" class="tab-pane" id="bystat-panel">
+            <div class="chartdiv" id="bystat-div" style="width: 100%; height: 400px; " ></div>
+            <form class="form-inline">
+              <div class="form-group">
+                <label for="bystat-start">Start</label>
+                <input type="text" name="start" id="bystat-start" value=""/>
+              </div>
+              <div class="form-group">
+                <label for="bystat-end">End</label>
+                <input type="text" name="end" id="bystat-end" value=""/>
+              </div>
+              <div class="form-group">
+                <select class="form-control" title="Stats Group" name="grouping"
+                        id="bystat-grouping">
+                  {% for key, text in bystat_groups %}
+                    {% if key == 'capture_node' %}
+                      <option value="{{ key }}" selected>{{ text }}</option>
+                    {% else %}
+                      <option value="{{ key }}">{{ text }}</option>
+                    {% endif %}
+                  {% endfor %}
+                </select>
+              </div>
+              <div class="form-group">
+                <select class="form-control" title="Stats Group" name="stat_type"
+                        id="bystat-stat_type">
+                  {% for key, text in bystat_stat_types %}
+                    {% if key == 'capture_size' %}
+                      <option value="{{ key }}" selected>{{ text }}</option>
+                    {% else %}
+                      <option value="{{ key }}">{{ text }}</option>
+                    {% endif %}
+                  {% endfor %}
+                </select>
+              </div>
+            </form>
+          </div>
+        </div>
+      </div>
+    </div>
+
+{% endblock %}
+
+{% block js %}
+
+  <!-- amCharts javascript sources -->
+  <script src="../static/theme/plugins/amcharts/amcharts.js"></script>
+  <script src="../static/theme/plugins/amcharts/serial.js"></script>
+  <script src="../static/theme/plugins/amcharts/amstock.js"></script>
+  <script src="../static/theme/plugins/amcharts/themes/light.js"></script>
+  <script src="../static/theme/plugins/amcharts/plugins/dataloader/dataloader.min.js" type="text/javascript"></script>
+
+
+  <script type="text/javascript">
+
+    var _BYSTAT_RANGE_CHANGE_TIMER = null;
+    var _BYGROUP_RANGE_CHANGE_TIMER = null;
+    var _GRAPH_RANGE_CHANGE_TIMEOUT = 1000;
+
+    function get_stats_bygroup(chart){
+      var site = $('#bygroup-site').val();
+      var capture_node = $('#bygroup_capturenode').val();
+      var iface = $('#bygroup-iface').val();
+      var start = $('#bygroup-start').val();
+      var end = $('#bygroup-end').val();
+
+      var data = {};
+      if (site != undefined && site != '') data['site'] = site;
+      if (capture_node != undefined && capture_node != '') data['capture_node'] = capture_node;
+      if (iface != undefined && iface != '') data['interface'] = iface;
+      if (start != undefined && start != '') {
+        data['start'] = new Date(start).toISOString();
+      }
+      if (end != undefined && end != '') {
+        data['end'] = new Date(end).toISOString();
+      }
+
+      console.log(Object.keys(data));
+
+      $.ajax({
+        url: "{% url 'stats_api:by-group' %}",
+        type: "get",
+        data: data,
+        success: [result_alerts, populate_chart(chart)],
+        error: function (err) {
+          console.log("AJAX error in request: " + JSON.stringify(err, null, 2));
+        }
+
+
+      });
+    }
+
+    function get_stats_bystat(chart){
+      var grouping = $('#bystat-grouping').val();
+      var stat_type = $('#bystat-stat_type').val();
+      var start = $('#bystat-start').val();
+      var end = $('#bystat-end').val();
+
+      var data = {};
+      if (grouping != undefined && grouping != '') data['grouping'] = grouping;
+      if (stat_type != undefined && stat_type != '') data['stat_type'] = stat_type;
+      // TODO Convert to UTC from localtime
+      if (start != undefined && start != '') {
+        data['start'] = new Date(start).toISOString();
+        console.log(data['start']);
+      }
+      if (end != undefined && end != '') {
+        data['end'] = new Date(end).toISOString();
+      }
+
+      $.ajax({
+        url: "{% url 'stats_api:by-stat' %}",
+        type: "get",
+        data: data,
+        success: [result_alerts, populate_chart(chart)],
+        error: function (err) {
+          console.log("AJAX error in request: " + JSON.stringify(err, null, 2));
+        }
+
+
+      });
+    }
+
+
+    // Never add these fields as graphs
+    IGNORE_CHART_DATA_FIELDS = [
+        'minute',
+        'capture_node__site_id',
+        'capture_node_id',
+        'interface_id',
+        'capture_node__hostname',
+        'capture_node__site__name'
+    ];
+
+    // Return a function to populate the given chart with data received in a ajax response.
+    function populate_chart(chart) {
+      return function (response) {
+        var data = response['data'];
+        if (data == undefined || data['chart_data'] == undefined) {
+          // Empty the chart if we couldn't get data.
+          chart.dataProvider = {};
+          chart.validateData();
+          console.log("No chart data?", Object.keys(data));
+          return;
+        }
+
+        var chart_data = data['chart_data'];
+
+        // Change the chart title to reflect what it's displaying
+        chart.titles = [];
+        chart.addTitle(data['title']);
+
+        //creates graphs for each different type of statistic
+        var datasets = [];
+        var sample_row = chart_data[0];
+        // Collect and sort these first so that the graph colors are consistent.
+        for (var key in sample_row) {
+          if (sample_row.hasOwnProperty(key) &&
+              IGNORE_CHART_DATA_FIELDS.indexOf(key) == -1) {
+            datasets.push(key);
+          }
+        }
+
+        // Hide any graphs that aren't being used with the new data
+        graphs_made = [];
+        var i;
+        for (i=0; i < chart.graphs.length; i++) {
+          var graph = chart.graphs[i];
+          graphs_made.push(graph.valueField);
+          if (datasets.indexOf(graph.valueField) == -1) {
+            graph.hideBullets();
+          }
+        }
+
+        // Add all the datasets that haven't already been added as graphs
+        datasets.sort();
+        for (i=0; i<datasets.length; i++) {
+          var dataset = datasets[i];
+          if (graphs_made.indexOf(dataset) == -1) {
+            var g = new AmCharts.AmGraph();
+            g.title = dataset;
+            g.valueField = dataset;
+            g.markerType = 'square';
+
+            chart.addGraph(g);
+          }
+        }
+
+        //adds data to the chart and loads it
+        chart.dataProvider = chart_data;
+        chart.validateData();
+      }
+    }
+
+    function init_timepicker_range(start_id, end_id) {
+      var time_settings = {
+        timeFormat: 'HH:mm',
+        showSecond: false,
+        showMillisec: false,
+        showMicrosec: false
+      };
+
+      var start = $('#'+start_id);
+      var end = $('#'+end_id);
+      $.timepicker.datetimeRange(
+          start,
+          end,
+          {
+            start: time_settings,
+            end: time_settings
+          }
+      );
+      start.val('');
+      end.val('');
+    }
+
+
+    $(document).ready(function(){
+
+      init_timepicker_range('bygroup-start', 'bygroup-end');
+      init_timepicker_range('bystat-start', 'bystat-end');
+
+      var bygroup_chart = AmCharts.makeChart("bygroup-div",
+          {
+              "pathToImages": "../static/theme/plugins/amcharts/images/",
+              "type": "serial",
+              "theme": "light",
+              "usePrefixes": true,
+              "categoryField": "minute",
+              "categoryAxis": {
+                  "minPeriod": "mm",
+                  "parseDates": true,
+                  //"labelFunction": labelFunction
+              },
+              //"dataDateFormat": {period: "mm", format: "YYYY-MM-DDTJJ:NN:SSZ"},
+              "chartCursor": {
+                  "enabled": true,
+                  "categoryBalloonDateFormat": "JJ:NN"
+              },
+              "chartScrollbar": {
+                  "enabled": true
+              },
+              "graphs": [],
+              "valueAxesSettings": [
+                  {
+                      "id": "ValueAxis-1",
+                      "title": "Axis title",
+                      "usePrefixes": true,
+                      "logarithmic": true,
+                      "unit": '/min',
+                  }
+              ],
+              "legend": {
+                  "enabled": true,
+                  "useGraphSettings": true
+              },
+              "titles": [
+                  {
+                      "id": "bygroup-title",
+                      "size": 15,
+                      "text": "Loading Data..."
+                  }
+              ]
+          }
+      ); //end of makeChart
+
+      var bystat_chart = AmCharts.makeChart("bystat-div",
+          {
+            "pathToImages": "../static/theme/plugins/amcharts/images/",
+            "type": "serial",
+            "theme": "light",
+            "usePrefixes": true,
+            "categoryField": "minute",
+            "categoryAxis": {
+              "minPeriod": "mm",
+              "parseDates": true,
+              //"labelFunction": labelFunction
+            },
+            //"dataDateFormat": {period: "mm", format: "YYYY-MM-DDTJJ:NN:SSZ"},
+            "chartCursor": {
+              "enabled": true,
+              "categoryBalloonDateFormat": "JJ:NN"
+            },
+            "chartScrollbar": {
+              "enabled": true
+            },
+            "graphs": [],
+            "valueAxesSettings": [
+              {
+                "id": "ValueAxis-1",
+                "title": "Axis title",
+                "usePrefixes": true,
+                "unit": '/min'
+              }
+            ],
+            "legend": {
+              "enabled": true,
+              "useGraphSettings": true
+            },
+            "titles": [
+              {
+                "id": "bystat-title",
+                "size": 15,
+                "text": "Loading Data"
+              }
+            ]
+          }
+      ); //end of makeChart
+
+      // Do the initial stats fetch when the tabs are displayed.
+      var bygroup_tab = $('#bygroup-tab');
+      bygroup_tab.on('show.bs.tab', function () { get_stats_bygroup(bygroup_chart); });
+      $('#bystat-tab').on('show.bs.tab', function () { get_stats_bystat(bystat_chart); });
+
+      // Get stats for the default tab
+      get_stats_bygroup(bygroup_chart);
+
+      // When any of the form fields change, adjust the graph.
+      $('#bygroup-site, #bygroup-iface, #bygroup_capturenode')
+          .change(function() {get_stats_bygroup(bygroup_chart)});
+      $('#bystat-grouping, #bystat-stat_type')
+          .change(function() {get_stats_bystat(bystat_chart)});
+
+      // Schedule a graph update for one second after our last change to the timeranges.
+      $('#bygroup-start, #bygroup-end').change(function() {
+        if (_BYGROUP_RANGE_CHANGE_TIMER !== null) clearTimeout(_BYGROUP_RANGE_CHANGE_TIMER);
+        _BYGROUP_RANGE_CHANGE_TIMER = setTimeout(function() {get_stats_bygroup(bygroup_chart)},
+                                                 _GRAPH_RANGE_CHANGE_TIMEOUT);
+      });
+
+      // Schedule a graph update for one second after our last change to the timeranges.
+      $('#bystat-start, #bystat-end').change(function() {
+        if (_BYSTAT_RANGE_CHANGE_TIMER !== null) clearTimeout(_BYSTAT_RANGE_CHANGE_TIMER);
+        _BYSTAT_RANGE_CHANGE_TIMER = setTimeout(function() {get_stats_bystat(bystat_chart)},
+                                                _GRAPH_RANGE_CHANGE_TIMEOUT);
+      });
+
+    }); //end of document ready
+
+  </script>
+
+{% endblock %}

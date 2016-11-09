@@ -1,0 +1,96 @@
+[pcapdb]
+# A host can be both an indexer and a search head, but there can only be one search head.
+indexer = False
+search_head = False
+
+# Required
+db_user = 
+db_pass = 
+
+# Defaults to 'pcapdb'
+# db_name = 
+# Defaults to 'indexer'
+# indexer_db_name = 
+
+# Used only for testing, defaults to 443
+# http_port = 8111
+
+# The title for the splash section.
+splash_title=Warning
+splash_text=Insert your variation of a splash page text here. (ie: This is a government system, etc.) This text is not escaped, so it can contain HTML elements.
+
+[smtp]
+# Configuration for the local smtp server to use to send email to users.
+
+# SMTP host.  Defaults to 'localhost'
+#host= 
+# SMTP port.  Defaults to 25
+#port=
+
+# Sender address. Defaults to pcapdb@<fqdn of this host>.
+#from=
+
+# Without the user, defaults to no authentication
+#user= 
+#password=
+
+# The 'users' group name you must be a member of to log in. 
+# default_group=pcapdb_users
+
+# The 'admin' group name
+# admin_group=pcapdb_admin
+
+# When this section is present, authentication through LDAP is enabled.
+#[ldap_auth]
+
+# The LDAP server to connect to, including scheme (ldap://) and port.
+#server=ldap://ldap.example.com:389
+
+# LDAP will connect to the server, and then try to bind to the dn generated based on the 
+# user trying to log in. The DN and password below is for the initial authentication to the LDAP 
+# server if users can't log in directly.
+#auth_bind_dn='cn=bob,ou=people,dc=example,dc=com'
+#auth_bind_password=somecrypticphrase
+
+# The base for searching for users
+#user_search_base='ou=people,dc=example,dc=com'
+
+# The attribute to search for the given username (default 'uid'). 
+# Used to build the user's distinguished name (dn: uniquely identifying name).
+#user_attr=uid
+
+# The following map LDAP user object attributes to django User object attributes. For username_attr,
+# the default is the above user_attr. Changing that allows us to store the user by a different
+# field name (logins based on employee number, but usernames based on uid, for instance). The 
+# default for the others is to just leave the field blank for django User.
+#username_attr=
+#first_name=
+#last_name=
+#email=
+
+# The user must be a member of the 'pcapdb_users' group to log in (changeable above). 
+# By default, this is assigned via the user management interface. When using LDAP auth, we can
+# also get a user's group membership information from LDAP when the following section is present.
+#[ldap_groups]
+
+# The identifying attribute for a group name (used to build the group dn). (default: 'cn')
+#group_name_attr=cn
+
+# The search base for relevant groups.
+#group_search_base='ou=group,dc=example,dc=com'
+
+# The type of group record we're searching for. Valid values currently include:
+# - 'posix', groups are expected in the 'posixGroup' objectClass.
+# - 'memberdn', groups are expected in the 'groupOfNames' objectClass. 
+#group_type=memberdn
+
+# We assign users to groups by finding all the groups in LDAP, and then mapping the user
+# logging in to those. If you've got a large number of groups in LDAP, this obviously inefficient.
+# The following gives a prefix to use when searching for relevant groups. If the prefix is
+# 'pcapdb_' for instance, a member dn search will look like: (&(objectClass=memberdn)(cn=pcapdb_*))
+#group_name_prefix=
+
+
+[celery]
+# When running celery setup, you'll be given the amqp password.
+# amqp_password = 

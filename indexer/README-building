@@ -1,0 +1,16 @@
+#### Requirements ####
+If you've installed everything in the sys-requirements.txt file you should be good to go, mostly. 
+
+ - If cmake claims to be missing a library you're sure you have, first try doing a make clean before running make again.
+ - The PostgreSQL library is often installed problematically. It's expected to live in 
+   '/usr/include/postgresql', but the RHEL RPMs install it in '/usr/pgsql-<version>/include'. 
+   To fix this, just make a softlink in /usr/include to point to the correct location.
+
+#### Building ####
+Simply running make in the indexer directory will build the project in indexer/build. 
+
+#### Installing ####
+'make install' will install everything in the default location of '/var/capture'. 
+For development purposes though, you can install it in your project site directory (one up from 
+this directory) by giving a DESTDIR environment variable. For example:
+'make install DESTDIR=/home/<username>/pcapdb'

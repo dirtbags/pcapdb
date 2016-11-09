@@ -1,0 +1,385 @@
+{% extends "master.html" %}
+{% block content %}
+<!-- row -->
+<div class="row">
+    <div class="col-xs-12 col-sm-7 col-md-7 col-lg-4">
+        <h1 class="page-header txt-color-blueDark">
+            {#  PAGE HEADER #}
+            <i class="fa-fw fa fa-plug"></i>
+            Interface Configuration
+			<span>
+			</span>
+        </h1>
+    </div>
+</div>
+
+<div class="row">
+  <div class="col-md-4">
+    <div class="panel panel-default">
+      <div class="panel-heading">
+        <a data-toggle="collapse" role="button" href="#CaptureControlCollapse"
+           aria-expanded="true" aria-controls="CaptureControlCollapse"
+           title="Open/Close Panel" class="h3">
+          Capture Control
+        </a>
+        <i class="fa fa-lg fa-question-circle help-popover"
+           data-toggle="popover" title="Capture Control Help"
+           data-content="Restarting capture will cause a momentary loss of packets."></i>
+      </div>
+        <div id="CaptureControlCollapse" class="panel-body panel-collapse collapse in">
+          <div class="row">
+            <div class="col-md-12">
+              <a id='start_button' role="button"
+                 class="disabled btn btn-lg btn-success btn-capture">Start</a>
+              <a id='restart_button' role="button"
+                 class="disabled btn btn-lg btn-warning btn-capture">Restart</a>
+              <a id='stop_button' role="button"
+                 class="disabled btn btn-lg btn-danger btn-capture">Stop</a>
+            </div>
+          </div>
+
+        </div>
+      </div>
+  </div>
+  <div class="col-md-8">
+    <div class="panel panel-default">
+      <div class="panel-heading">
+        <a data-toggle="collapse" role="button" href="#CaptureControlCollapse"
+           aria-expanded="true" aria-controls="CaptureControlCollapse"
+           title="Open/Close Panel" class="h3">
+          Capture Settings
+        </a>
+      </div>
+      <div id="CaptureControlCollapse" class="panel-body panel-collapse collapse in">
+        <form method="post"
+              id="capture_settings_form"
+              action="{% url 'search_head_api:capnode_settings' capture_node=capnode.id %}">
+          {% csrf_token %}
+          <div class="row">
+            <div class="col-md-5">
+                <label for="capture_mode">Capture Sub-System to use.</label>
+                <i class="fa fa-lg fa-question-circle help-popover"
+                   data-toggle="popover" title="Capture Sub-System Help"
+                   data-content="PFring ZC will only work on licensed interfaces, and will
+                    automatically downgrade to standard PFring if necessary."></i>
+                <select id="capture_mode" name="capture_mode">
+                </select>
+            </div>
+            <div class="col-md-3">
+                <button class="btn btn-success">Update Settings</button>
+            </div>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+
+{# START ROW #}
+<div class="row">
+  <div class="col-md-12">
+    {% include "libs/dt_autotable.html" with table_id="iface_table" title="Interfaces" %}
+  </div>
+</div>
+
+{% endblock %}
+
+{% block js %}
+
+<script type="text/javascript">
+
+  function iface_toggle(ev) {
+    ev.stopPropagation();
+    var iface = ev.data['iface'];
+    var row_el = ev.data['row'];
+
+    var data = {action: 'toggle_enabled',
+                iface: iface,
+                csrfmiddlewaretoken: CSRF_TOKEN};
+
+    $.ajax("{% url 'search_head_api:capnode_iface_toggle' capture_node=capnode.id %}",
+        {
+          data: data,
+          method: "POST",
+          success: [function (result, textStatus, jqXHR) {
+            if (result['data'] !== undefined ) {
+              var dt = $('#iface_table').DataTable();
+              var row = dt.row(row_el);
+              row.data(result['data']);
+              row.draw();
+            }
+          },
+          result_alerts]
+        }
+    )
+
+  }
+
+  function capture_state_set_callback(state) {
+    return function (ev) {
+      $.ajax("{%  url 'search_head_api:capture_nodes' capture_node=capnode.id %}",
+          {
+            'data': {
+              'csrfmiddlewaretoken': CSRF_TOKEN,
+              'state': state,
+              'action': 'capture_state'
+            },
+            'method': 'POST',
+            'success': [
+              result_alerts,
+              get_capture_status
+            ],
+            'error': function (a,b,c) {console.log("error setting state: " + b)}
+          }
+      );
+    };
+  }
+
+  function iface_update_queues(ev) {
+    ev.stopPropagation();
+    var iface = ev.data['iface'];
+    var row_el = ev.data['row'];
+
+    var queues = $(row_el).children('.iface-queues').children('input').val();
+
+    var data = {
+      iface: iface,
+      queues: queues,
+      csrfmiddlewaretoken: CSRF_TOKEN};
+
+    $.ajax("{% url 'search_head_api:capnode_iface_queues' capnode.id %}",
+        {
+          data: data,
+          method: "POST",
+          success: [function (result, textStatus, jqXHR) {
+            if (result['data'] !== undefined ) {
+              var dt = $('#iface_table').DataTable();
+              var row = dt.row(row_el);
+              row.data(result['data']);
+              row.draw();
+            }
+          },
+            result_alerts]
+        }
+    )
+  }
+
+  function get_capture_status(result, testStatus, jqXHR) {
+    $.ajax("{%  url 'search_head_api:capture_nodes' capture_node=capnode.id %}",
+        {
+          'data': {
+            'csrfmiddlewaretoken': CSRF_TOKEN,
+            'action': 'capture_state'
+          },
+          'method': 'GET',
+          'success': function (result, testStatus, jqXHR) {
+            if (result['data'] == undefined) {
+              return;
+            }
+
+            var data = result['data'];
+            // Our capture node data should be the first in a list of 1.
+            data = data[0];
+
+            var state = data['state'];
+            if (state == undefined) {
+              return;
+            }
+
+            var mode_list = $('#capture_mode');
+            mode_list.children().detach();
+            var modes = state['CAPTURE_MODES'];
+            var i;
+            for (i=0; i < modes.length; i++) {
+              var mode = modes[i][0];
+              var mode_pp = modes[i][1];
+
+              var opt = $('<option>');
+              opt.attr('value', mode);
+              opt.append(mode_pp);
+              if (state['capture_mode'] == mode) {
+                opt.attr('selected', true);
+              }
+              mode_list.append(opt);
+            }
+
+            if (state['capture_status'][0] == 'OK' ||
+                state['capture_status'][0] == 'RESTART') {
+              $('#start_button').addClass('disabled').off('click');
+              $('#restart_button').removeClass('disabled').off('click')
+                  .click(capture_state_set_callback('restart'));
+              $('#stop_button').removeClass('disabled').off('click')
+                  .click(capture_state_set_callback('stop'));
+            } else {
+              $('#start_button').removeClass('disabled').off('click')
+                  .click(capture_state_set_callback('start'));
+              $('#restart_button').addClass('disabled').off('click');
+              $('#stop_button').addClass('disabled').off('click');
+            }
+          }
+        }
+    );
+  }
+
+  $(document).ready(function(){
+    get_capture_status();
+
+    var data = {
+      capture_node: {{ capnode.id }},
+      action: 'capture_settings'
+    };
+
+    $("#capture_settings_form").ajaxForm({
+      'dataType': 'json',
+      'data': data,
+      'success': function (results, status, jqXHR) {
+        result_alerts(results, status, jqXHR);
+      }
+    });
+
+    $("#iface_table").dataTable({
+      jqueryUI: true,
+      paging: false,
+      dom: 'T',
+      ajax: "{% url 'search_head_api:capnode_ifaces' capture_node=capnode.id %}",
+      sAjaxDataProp: "data",
+      columns: [
+        {
+          data: 'name',
+          title: 'Name'
+        },
+        {
+          data: 'enabled',
+          title: 'Capture Status',
+          render: function(data, type, set, meta) {
+            if (type != 'display') {
+              return data;
+            } else {
+              return '';
+            }
+          },
+          createdCell: function(cell, cellData, rowData, rowIndex, colIndex) {
+            var jq_td = $(cell);
+
+            //jq_td.append($('<i>').addClass('fa fa-question'));
+            jq_td.addClass('iface-state');
+          }
+
+        },
+        {
+          data: 'queues',
+          title: 'Queues',
+          render: function (data, type, set, meta) {
+            if (type != 'display') {
+              return data;
+            }
+            return '';
+          },
+          createdCell: function(cell, cellData, rowData, rowIndex, colIndex) {
+            var jq_td = $(cell);
+
+            jq_td.addClass('iface-queues')
+          }
+        },
+        {
+          data: 'mac',
+          title: 'MAC'
+        },
+        {
+          data: 'mtu',
+          title: 'MTU'
+        },
+        {
+          data: 'driver',
+          title: 'Driver',
+          defaultContent: ''
+        },
+        {
+          data: {
+            '_': 'speed',
+            'display': 'speed_hr'
+          },
+          title: 'Speed',
+          defaultContent: ''
+        }
+
+      ],
+      rowCallback: function (row, data, index) {
+        // Update the 'enabled' cell with a set of icons instead of text.
+        var running_enabled = data['running_enabled'];
+        var enabled = data['enabled'];
+
+        var jq_td = $(row).children('.iface-state');
+        jq_td.children().detach();
+
+        var i_run = $('<i>');
+        i_run.addClass('fa fa-lg');
+        if (running_enabled != enabled) {
+          if (running_enabled) {
+            i_run.addClass('fa-check-circle iface-enabled');
+          } else {
+            i_run.addClass('fa-circle-o iface-disabled');
+          }
+          jq_td.append(i_run);
+
+          var arrow = $('<i>');
+          arrow.addClass('fa fa-arrow-right');
+          jq_td.append(arrow);
+
+        }
+
+        var i_new_state = $('<i>');
+        i_new_state.addClass('fa fa-lg');
+        if (enabled) {
+          i_new_state.addClass('fa-check-circle iface-enabled');
+          jq_td.hover(function () {
+                $('i:last-child', this).removeClass('fa-check-circle iface-enabled')
+                    .addClass('fa-circle-o iface-disabled');
+              },
+              function () {
+                $('i:last-child', this).removeClass('fa-circle-o iface-disabled')
+                    .addClass('fa-check-circle iface-enabled');
+              });
+        } else {
+          i_new_state.addClass('fa-circle-o iface-disabled');
+          jq_td.hover(function () {
+                $('i:last-child', this).removeClass('fa-circle-o iface-disabled')
+                    .addClass('fa-check-circle iface-enabled');
+              },
+              function () {
+                $('i:last-child', this).removeClass('fa-check-circle iface-enabled')
+                    .addClass('fa-circle-o iface-disabled');
+              });
+        }
+        jq_td.append(i_new_state);
+
+        jq_td.children().attr('title', 'Toggle capturing on this interface.');
+        jq_td.children('i').click({row: row, iface: data['name']}, iface_toggle);
+
+        // Set the queues cell to have a slider, if it needs one.
+        var queues_td = $(row).children('.iface-queues');
+        queues_td.children().detach();
+        if (data['max_queues'] == 1) {
+          queues_td.append($('<span>1</span>'));
+        } else {
+          var queues_span = $('<span>');
+          queues_span.append(document.createTextNode(data['queues']));
+          queues_td.append(queues_span);
+          // This input lacks a proper form, but it doesn't really need one.
+          var queues_slider = $('<input>');
+          queues_slider.attr('type', 'range');
+          queues_slider.attr('min', 1);
+          queues_slider.attr('step', 1);
+          queues_slider.attr('max', data['max_queues']);
+          queues_slider.val(data['queues']);
+          queues_td.children().attr('title', 'Set the number of queues (CPU\'s) to distribute ' +
+              'this interface across.');
+          queues_td.append(queues_slider);
+          queues_slider.change({row: row, iface: data['name']}, iface_update_queues);
+        }
+      }
+    })
+  });
+</script>
+
+{% endblock %}
