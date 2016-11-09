@@ -21,7 +21,11 @@ __pycache__
 __pycache__/*
 .idea/
 .idea/*
+filetypes.xml
+project.default.xml
 vcs.xml
+editor.codeinsight.xml
+debugger.xml
 
 /_windows
 /capture
