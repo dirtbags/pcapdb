@@ -21,4 +21,5 @@ celery
 uwsgi
 validate_email
 daemonize
-zxcvbn
+zxcvbn-py3
+iso8601

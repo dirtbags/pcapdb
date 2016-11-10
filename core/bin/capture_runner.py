@@ -23,8 +23,9 @@ log = logging.getLogger('capture_runner')
 
 REFRESH_RATE = 1
 
-def main():
+os.umask(0o002)
 
+def main():
     status = Status.load()
     while True:
         # Exits when killed

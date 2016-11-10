@@ -483,7 +483,7 @@ if IS_CAPTURE_NODE:
     CELERYBEAT_SCHEDULE['gather_if_stats'] = {
         'options': {'queue': NODE_NAME},
         'task': 'apps.capture_node_api.tasks.stats.update_stats',
-        'schedule': datetime.timedelta(seconds=30)
+        'schedule': datetime.timedelta(seconds=60)
     }
     CELERYBEAT_SCHEDULE['clean_indexes'] = {
         'options': {'queue': NODE_NAME},

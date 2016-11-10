@@ -1,5 +1,6 @@
 import json
 import os
+import pytz
 import subprocess as sp
 import uuid
 
@@ -104,6 +105,9 @@ class Search(SearchHeadAPIView):
                                      site=site)
             search_site.save()
 
+        ser_start = data['start'].isoformat()
+        ser_end = data['end'].isoformat()
+
         subtasks = []
         for capnode in capnodes:
             node_search = NodeSearch(search=search_info,
@@ -111,8 +115,8 @@ class Search(SearchHeadAPIView):
                                      capture_node=capnode)
             node_search.save()
             args = [data['query'],
-                    data['start'],
-                    data['end'],
+                    ser_start,
+                    ser_end,
                     data['proto'],
                     node_search.post_url()]
             kwargs = {'packets': data['action'] == SearchInfo.T_PCAP}
@@ -350,7 +354,6 @@ class FlowResultView(SearchHeadAPIView):
             order_index = params['order[0][column]']
             order_field_param = 'columns[' + order_index + '][name]'
             order_field = self.order_fields.get(params.get(order_field_param))
-            log.info("hrrm: {}, {}, {}".format(order_index, order_field, order_field_param) )
             if order_field is not None:
                 cmd.extend([order, order_field])
 
@@ -369,7 +372,6 @@ class FlowResultView(SearchHeadAPIView):
             except ValueError:
                 return Response(data={'warning': 'Invalid start position.'})
 
-        log.info('read_flows cmd: {}'.format(' '.join(cmd)))
         proc = sp.Popen(cmd, stdout=sp.PIPE, stderr=sp.DEVNULL)
         stdout, _ = proc.communicate()
 

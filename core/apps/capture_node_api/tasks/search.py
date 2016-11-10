@@ -16,6 +16,8 @@ from apps.capture_node_api.lib.search import parse
 from apps.capture_node_api.models import ResultFile
 from apps.capture_node_api.models.capture import Index
 
+import iso8601
+
 import logging
 log = logging.getLogger(__name__)
 
@@ -25,12 +27,12 @@ IF_SYS_PATH = '/sys/class/net/'
 
 
 @shared_task(bind=True)
-def search_node(self, search_txt, start_dt, end_dt, proto, result_url, packets=False):
+def search_node(self, search_txt, start, end, proto, result_url, packets=False):
     """Perform a search across the given time-span.
     :param self: This is run as a method.
     :param str search_txt: The search to perform.
-    :param datetime start_dt: The start timestamp, in GMT
-    :param datetime end_dt: The end timestamp, in GMT
+    :param str start_dt: The start timestamp as an ISO8601 UTC string
+    :param str end_dt: The end timestamp as an ISO8601 UTC string
     :param int proto: The transport protocol ('all', 'tcp', 'udp')
     :param str result_url: The url to use to PUT the result on the search head.
     :param bool packets: If true, return packets rather than a flow result.
@@ -44,7 +46,8 @@ def search_node(self, search_txt, start_dt, end_dt, proto, result_url, packets=F
     tree = tree.normalize()
     tree.prune()
 
-    log.info("self stuff: {}".format(dir(self)))
+    start_dt = iso8601.parse_date(start)
+    end_dt = iso8601.parse_date(end)
 
     # Get all of the indexes that match our time range.
     indexes = Index.objects.filter(start_ts__lt=end_dt,

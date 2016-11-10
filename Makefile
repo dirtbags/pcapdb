@@ -4,8 +4,15 @@ PY_VERS=3.4
 PGSQL_BINPATH="$(shell dirname $$(locate -r 'pg_config$$' | sort | tail -1))"
 PATH_EXPORT=export PATH=$$PATH:${PGSQL_BINPATH}:/usr/local/bin;
 
-DESTDIR=/var/pcapdb
+# The proxy info for you site
 PROXY=
+HTTP_PROXY=
+ifneq "${PROXY}" ""
+	export http_proxy="http://${PROXY}"
+	export https_proxy="http://${PROXY}"
+endif
+
+DESTDIR=/var/pcapdb
 RABBITMQCTL=/usr/sbin/rabbitmqctl
 DD=/bin/dd
 # This is used to create a password, not a password hash. As such, it's ok to use
@@ -22,12 +29,10 @@ ifeq "${DESTDIR}" "$(shell pwd)"
   CAPTURE_USER="$(shell whoami)"
   CAPTURE_GROUP=users
   INSTALL_PERMS=
-  INSTALL_SUDO=
 else
   CAPTURE_USER="capture"
   CAPTURE_GROUP="capture"
   INSTALL_PERMS=--owner=${CAPTURE_USER} --group=${CAPTURE_GROUP} 
-  INSTALL_SUDO=sudo -u ${CAPTURE_USER} -g ${CAPTURE_USER}
 endif
 
 # Build and install the capture system.
@@ -39,8 +44,7 @@ install-monolithic: install-common capture-node-configs search-head-configs comm
 
 # Create the python ${DESTDIR}/bin/python that will run all our python code
 ${DESTDIR}/bin/python:
-	${INSTALL_SUDO} echo $$PATH
-	${PATH_EXPORT} ${INSTALL_SUDO} /usr/local/bin/virtualenv -p /usr/local/bin/python${PY_VERS} ${DESTDIR}
+	${PATH_EXPORT} /usr/local/bin/virtualenv -p /usr/local/bin/python${PY_VERS} ${DESTDIR}
 
 # Setup rabbitmq for use with PcapDB
 # This only needs to run on the search head.
@@ -48,7 +52,7 @@ rabbitmq:
 	-${RABBITMQCTL} delete_user guest
 	# This generates our rabbitmq password
 	${DD} if=/dev/urandom count=1 bs=512 | ${HASHER} - | head -c 16 > /tmp/.rabbitmq_pass
-	${RABBITMQCTL} delete_user pcapdb
+	-${RABBITMQCTL} delete_user pcapdb
 	${RABBITMQCTL} add_user pcapdb $$(cat /tmp/.rabbitmq_pass)
 	${RABBITMQCTL} set_permissions -p / pcapdb '.*' '.*' '.*'
 	echo "Setting the rabbitmq/amqp password in etc/pcapdb.cfg"
@@ -65,6 +69,7 @@ ifneq "${DESTDIR}" "$(shell pwd)"
 endif
 	mkdir -p ${SYSTEM_DIRS}
 	chown ${CAPTURE_USER}:${CAPTURE_GROUP} ${SYSTEM_DIRS}
+	chmod g+s ${CAPTURE_GROUP} ${DESTDIR}/log
 
 core: setup_dirs 
 ifneq "${DESTDIR}" "$(shell pwd)"
@@ -148,8 +153,8 @@ setup_user:
 	if ! id ${CAPTURE_USER} > /dev/null; then useradd -d ${DESTDIR} -c "PcapDB User" -g ${CAPTURE_GROUP} -M -r ${CAPTURE_USER}; fi
 endif 
 
-${DESTDIR}/lib/packages_installed: ${DESTDIR}/bin/python
-	${PATH_EXPORT} ${INSTALL_SUDO} ${DESTDIR}/bin/pip ${PROXY} install -r requirements.txt 
+${DESTDIR}/lib/packages_installed: ${DESTDIR}/bin/python requirements.txt
+	http_proxy=${http_proxy} export https_proxy=${http_proxy} ${PATH_EXPORT} ${DESTDIR}/bin/pip install -r requirements.txt 
 	echo "Warning: if you have multiple postgres versions installed and/or psycopg2 fails to work,"
 	echo "then it's possibly because the wrong postgres bin path was used."
 	echo "Use pip to uninstall psycopg2, and reinstall with the correct path."

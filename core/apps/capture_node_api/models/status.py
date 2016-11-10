@@ -124,12 +124,10 @@ class Status(SingletonModel):
             if os.getuid() != 0:
                 readlink.append(settings.SUDO_PATH)
             readlink.extend(['/bin/readlink', '-f', os.path.join(pid_dir, 'exe')])
-            log.error('readlink cmd: {}'.format(' '.join(readlink)))
             proc = subprocess.Popen(readlink, stdin=subprocess.DEVNULL,
                                     stdout=subprocess.PIPE, stderr=subprocess.PIPE)
             outs, err = proc.communicate(input="")
             outs = outs.decode('utf8').strip()
-            log.error("outs: {}, {}, {}".format(outs, err, settings.CAPTURE_CMD))
             if outs != settings.CAPTURE_CMD:
                 if outs.endswith("(deleted)") and outs.split()[0] == settings.CAPTURE_CMD:
                     return self.RESTART, "The capture program has been updated. Restart needed."
@@ -273,7 +271,6 @@ class Status(SingletonModel):
         for iface in interfaces:
             iface.prepare()
             queue_count = iface.queues
-            log.info('Queue Count: {}'.format(queue_count))
             if (queue_count is not None and queue_count > 1 and
                     self.capture_mode in (self.MODE_PFRING, self.MODE_PFRINGZC)):
 
