@@ -104,8 +104,8 @@ def search_merge(self, node_search_results, search_id):
 
         # Delete all the intermediate results.
         for node_result in search.node_results.all():
-            #log.info("Result file: {}, {}".format(os.path.exists(node_result.file.path),
-            #                                      node_result.file.path))
+            log.info("Result file: {}, {}".format(os.path.exists(node_result.file.path),
+                                                  node_result.file.path))
             node_result.file.delete()
             node_result.delete()
 

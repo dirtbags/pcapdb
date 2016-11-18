@@ -1,13 +1,14 @@
 import json
 import os
-import pytz
 import subprocess as sp
+import tempfile
 import uuid
 
 from celery import chord
 from django.http import Http404, HttpResponse
 from django.db import transaction
 from django.db.models import Q
+from django.core.files import File
 from django.views.decorators.csrf import csrf_exempt
 from rest_framework.authentication import SessionAuthentication
 from rest_framework.response import Response
@@ -178,7 +179,6 @@ class PutNodeSearchResult(APIView):
 
     renderer_classes = (JSONRenderer,)
     permission_classes = []
-    # authentication_classes = (CsrfExemptSessionAuthentication,)
     parser_classes = (FileUploadParser,)
 
     def put(self, request, token):
@@ -191,13 +191,20 @@ class PutNodeSearchResult(APIView):
         except Exception as err:
             log.info("Other exc: {}".format(err))
             raise
+        log.info('request data keys: {}'.format(request.data.keys()))
 
-        f = open('/tmp/test', 'wb')
-        for chunk in request.data['file'].chunks():
-            f.write(chunk)
-        f.close()
+        if 'file' in request.data:
+            data = request.data['file']
+        else:
+            # If we don't get a file, that means the search results were empty.
+            data = File(open('/dev/null', 'rb'))
 
-        node_search.file.save(str(uuid.uuid4()), request.data['file'])
+        node_search.file.save(str(uuid.uuid4()), data)
+        node_search.file.close()
+
+        path = node_search.file.path
+        log.info("Stored: {}, size: {}, exists? {}".format(path, os.path.getsize(path),
+                                                           os.path.exists(path)))
 
         return Response(status=204)
 
@@ -316,8 +323,6 @@ class FlowResultView(SearchHeadAPIView):
         """
 
         params = request.query_params
-        for param in sorted(params.keys()):
-            log.info("{}: {}".format(param, params[param]))
 
         try:
             search = SearchInfo.objects.get(id=search_id)

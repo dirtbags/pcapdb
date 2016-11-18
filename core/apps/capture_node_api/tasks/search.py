@@ -116,7 +116,7 @@ def search_node(self, search_txt, start, end, proto, result_url, packets=False):
             output_fn = final_result
 
         if packets:
-            merge_cmd = [settings.MERGECAP_PATH, '-w', output_fn]
+            merge_cmd = [settings.MERGECAP_PATH, '-F', 'libpcap', '-w', output_fn]
         else:
             merge_cmd = [cmd_path/'merge', output_fn,
                          '-r', full_result_fn]
@@ -157,15 +157,14 @@ def search_node(self, search_txt, start, end, proto, result_url, packets=False):
     for fn in finished_files:
         os.unlink(fn)
 
-    #log.info("final result url: {}".format(result_url))
 
-    requests.put(result_url, open(final_result, 'rb'),
-                 headers={'Content-Disposition': 'attachment; filename=data',
-                          'Content-Type': 'application/octet-stream'},
-                 # Disable any proxies we might have configured.
-                 proxies={'https': None, 'http': None})
+    res = requests.put(result_url, open(final_result, 'rb'),
+                       headers={'Content-Disposition': 'attachment; filename=data',
+                                'Content-Type': 'application/octet-stream'},
+                       # Disable any proxies we might have configured.
+                       proxies={'https': None, 'http': None})
+    res.close()
 
-    #log.info("Final result file: {}".format(final_result))
     os.unlink(final_result)
 
     return {}

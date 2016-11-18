@@ -463,20 +463,23 @@ BROKER_URL = 'amqp://{user}:{password}@{host}:{port}//'.format(
     port=config.get('celery', 'amqp_port', fallback='5672'),
 )
 CELERY_RESULT_BACKEND = 'djcelery.backends.database:DatabaseBackend'
-from kombu import Queue
+from kombu import Queue, Exchange
+
 CELERY_QUEUES = []
 if IS_SEARCH_HEAD:
-    CELERY_QUEUES.append(Queue('search_head'))
     CELERY_QUEUES.append(Queue('celery'))
+    CELERY_QUEUES.append(Queue('search_head', exchange=Exchange('search_head')))
 if IS_CAPTURE_NODE:
-    CELERY_QUEUES.append(Queue(NODE_NAME))
+    CELERY_QUEUES.append(Queue(NODE_NAME, exchange=Exchange('capture_node')))
 
+CELERY_ROUTES = ['capture_node_api.routers.capture_node_router']
 CELERY_EVENT_SERIALIZER = 'json'
 CELERY_TASK_SERIALIZER = 'json'
 CELERY_RESULT_SERIALIZER = 'json'
 CELERY_ACCEPT_CONTENT = ['json']
 CELERYBEAT_SCHEDULE = {}
 CELERYBEAT_SCHEDULE_FILENAME = SITE_ROOT/'celerybeat-schedule'
+CELERYD_PREFETCH_MULTIPLIER = 1
 
 if IS_CAPTURE_NODE:
     # Send stats to the search head every five minutes
