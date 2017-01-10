@@ -6,7 +6,7 @@ sequence of packets with the same src/dst ips/ports and transport proto), indexe
 searched (again) by flow. The indexes for the captured packets are relatively tiny (typically less
 than 1% the size of the captured data). 
 
-For hardware requirements, see HARDWARE.md.
+For hardware requirements, see [HARDWARE.md](HARDWARE.md).
 
 ## Architectural Overview ##
 A PcapDB installation consists of a Search Head and one or more Capture Nodes. The Search Head can
