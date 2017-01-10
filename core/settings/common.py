@@ -21,13 +21,13 @@ https://docs.djangoproject.com/en/1.8/ref/settings/
 # Build paths inside the project like this: os.path.join(BASE_DIR, ...)
 from configparser import ConfigParser
 import datetime
-from path import path
+from path import Path
 import pytz
 import socket
 import sys
 
 # The root directory of the project. The 'core' directory in the repo.
-PROJECT_ROOT = path(__file__).abspath().dirname().dirname()
+PROJECT_ROOT = Path(__file__).abspath().dirname().dirname()
 # The root directory of the site. This is where our virtual environment, logs,
 # and everything else related to the running of the system will live.
 # It will also include the project root.
