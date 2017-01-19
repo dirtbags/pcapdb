@@ -6,8 +6,8 @@
 # Postgres provides package servers for each of their versions most major linux distributions.
 postgresql-server>=9.4
 
-# You'll need wireshark, specifically the mergecap command. We'll probably, eventually, write our own to drop this dependency.
-wireshark
+# You'll need tshark (or wireshark), specifically the mergecap command. We'll probably, eventually, write our own to drop this dependency.
+tshark
 
 # ius.io is a good source for python3 RPMs 
 python >= 3.4
