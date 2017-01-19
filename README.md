@@ -180,3 +180,21 @@ at:
 If these don't already exist when running make install, self-signed certs will be created
 automatically (with your input).
 
+
+# A Few Other Tasks
+
+## Install static files
+You will need to install the static files for pcapdb. 
+
+```
+sudo su - capture
+./bin/python core/manage.py collectstatic
+```
+# Making sure everything is working. 
+After installing and setting up the database, there are a few things you can check to make sure
+everything is working. 
+
+ 1. Restart supervisord to reset the uwsgi and celery processes to pick up the new database configs.
+
+ 2. Go to your webserver's root directory https://<myserver>/, and you should get to the pcapdb
+ login page.

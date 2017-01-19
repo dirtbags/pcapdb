@@ -1,5 +1,5 @@
 [program:pcapdb_uwsgi]
-command=env uwsgi --ini DESTDIR/etc/uwsgi.ini --uid capture --gid WWW_USER
+command=env uwsgi --ini DESTDIR/etc/uwsgi.ini --uid capture --gid WWW_USER --logto DESTDIR/log/uwsgi.log --plugins=python3
 autorestart=true
 user=root
 stopsignal=KILL
