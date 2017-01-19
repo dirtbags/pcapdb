@@ -1,4 +1,4 @@
-# Overview #
+# Overview 
 PcapDB is a distributed, search-optimized open source packet capture system. It was designed to
 replace expensive, commercial appliances with off-the-shelf hardware and a free, easy to manage 
 software system. Captured packets are reorganized during capture by flow (an indefinite length
@@ -8,20 +8,20 @@ than 1% the size of the captured data).
 
 For hardware requirements, see [HARDWARE.md](HARDWARE.md).
 
-## Architectural Overview ##
+## Architectural Overview 
 A PcapDB installation consists of a Search Head and one or more Capture Nodes. The Search Head can
 also be a Capture Node, or it can be a VM somewhere else. Wherever it is, the Search Head must be
 accessible by the Capture Nodes, but there's no need for the Capture Nodes to be visible to the 
 Search Head.
 
-# Requirements #
+# Requirements 
 PcapDB is designed to work on Linux servers only. It was developed on both Redhat Enterprise and Debian systems, but its primary testbed has so far been Redhat based.
 
 `sys_requirements.txt` contains a list of the packages required to run and build pcapdb.
 
 requirements.txt contains python/pip requirements. They will be installed via 'make install'.
 
-# Installing #
+# Installing 
 To build and install everything in /var/pcapdb/, run one of:
 ```
 make install-search-head
@@ -39,25 +39,25 @@ Postgresql may install in a strange location, as noted in the 'indexer/README'. 
 failures in certain pip installed packages. Add `PATH=$PATH:<pgsql_bin_path>` to the end of your
 'make install' command to fix this. For me, it is: `make install PATH=$PATH:/usr/pgsql-9.4/bin`.
 
-# Setup #
+# Setup 
 After running 'make install', there are a few more steps to perform. 
 
 'sudo make rabbitmq' will setup rabbitmq for use with pcapdb, create a password for the pcapdb account, and automatically set that password in the the pcapdb config file.
 
-## DESTDIR/etc/pcapdb.cfg ##
+## DESTDIR/etc/pcapdb.cfg 
 This is the main Pcapdb config file. You must set certain values before PcapDB will run at all.
 
-## Database Setup ##
+## Database Setup 
 The setup varies significantly between the search head and capture nodes. 
 
-### Add the 'capture' Role ###
+### Add the 'capture' Role 
 On all pcapdb servers, add a 'capture' role with login privileges and a password:
 'createuser capture -l -P'
 
 The 'db\_pass' variable in the pcapdb.cfg file should be set to the Search Head's db password on all
 pcapdb hosts in the network. 
 
-### On the Search Head ###
+### On the Search Head 
 Create a database named "pcapdb":
 'createdb -O capture pcapdb'
 
@@ -72,20 +72,23 @@ Edit the Search Head's postgresql.conf file so that it listens on it's own IP:
 listen_addresses = 'localhost,<search head ip>'
 ```
 
-### On the Capture Nodes ###
+### On the Capture Nodes 
 Create a database named 'capture\_node' on each capture node host:
 ```
-createdb -O capture capture\_node
+createdb -O capture capture_node
 ```
 
 Since the capture nodes connect via peer (unix socket) to their own database, no additional setup
 should be needed.
 
-### Install the Database Tables ###
+### Install the Database Tables 
 After restarting the postgres service, we'll need to install the database tables on each 
 PcapDB host. From the PcapDB installation directory (typically /var/pcapdb):
 ```
+sudo su - root
 cd /var/pcapdb
+./bin/python core/manage.py makemigrations stats_api login_api core task_api search_head_api
+login_gui search_head_gui capture_node_api
 ./bin/python core/manage.py migrate
 ```
 
@@ -110,13 +113,13 @@ supervisord.
  - To run capture, use the capture_runner.py script: 
    `DESTDIR/bin/python DESTDIR/core/bin/capture_runner.py`
 
-## System Component Hierarchy ##
+## System Component Hierarchy 
 The PcapDB Search Head install consists of a PostgreSQL server, a Celery task queueing system, a
 RabbitMQ messaging system, a uWSGI service, an NGINX webserver, and SupervisorD process management
 system. The Capture Nodes are simpler, running only Celery, PostgreSQL SupervisorD, and the PcapDB
 capture process. 
 
-### PostgreSQL ###
+### PostgreSQL 
 While PcapDB is a database of packets, it uses postgres to take care of more mundane database tasks.
 The Search Head has a unique database that houses information on users, capture nodes, celery
 response data, and aggregate statistics for the entire network of PcapDB capture nodes. All PcapDB
@@ -127,7 +130,7 @@ that node. This database is only accessible to the capture node itself.
 
 This has to be set up manually. See below for more information.
 
-### Celery ###
+### Celery 
 Celery is a system for distributing and scheduling tasks across a network of workers. PcapDB manages
 all of it's communications with the Capture Nodes through Celery tasks, from initiating searches to
 managing disk arrays. The tasks are assigned and picked up by the appropriate host via RabbitMQ
@@ -137,7 +140,7 @@ task queues (see RabbitMQ below).
 
 Celery is configured automatically on system install, and the process is managed via supervisord.
 
-### RabbitMQ ###
+### RabbitMQ 
 RabbitMQ is a fast and efficient messaging system used to communicate simple messages between a
 distributed network of hosts. As with Celery, RabbitMQ is really meant for distributing messages to
 the 'first available' worker, but in PcapDB all of our messages are to a specific worker. As such,
@@ -156,7 +159,7 @@ The above script will setup rabbitmq and a global user used by the search head a
 nodes. The login information is automatically populated in /var/pcapdb/etc/pcapdb.cfg on the search
 head, but will need to be added to the pcapdb.cfg file for each Capture Node manually.
 
-### uWSGI and Nginx ###
+### uWSGI and Nginx 
 The web interface for PcapDB is built in the Python Django system, which is served via a unix
 socket using uWSGI and persistant Python instances. Nginx handles all of the standard HTTP/HTTPS
 portions of the web service, and passes Django requests to uWSGI via it's socket. (This is a pretty
@@ -166,7 +169,7 @@ standard way of doing things).
  - Nginx is managed as a standard system service.
  - uWSGI is managed via supervisord
 
-#### Certificates ####
+#### Certificates 
 The standard configuration for PcapDB and Nginx expects ssl certificates and a private key installed
 at:
 ```
@@ -174,6 +177,6 @@ at:
 /etc/ssl/<HOSTNAME>.prv
 ```
 
-If these don't already exist when running make install\*, self-signed certs will be created
+If these don't already exist when running make install, self-signed certs will be created
 automatically (with your input).
 
