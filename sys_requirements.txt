@@ -16,14 +16,23 @@ python-devel
 python-pip 
 python-virtualenv # If you don't have a package for this, it can be obtained via pip
 
+# Needed py the python ldap package
+libsasl2-dev
+libldap2-dev
+
 # rabbitmq is available via EPEL.
 # On the searchhead
 rabbitmq-server>=3.1 
 
-# On indexers
+supervisor
+
+# Only on the indexer hosts, you'll need the following 
 librabbitmq
 ethtool
 pfring  >= 6.2 # See Building PF-ring below.
+
+# On the search head, you'll need the following
+nginx
 
 # Build Requirements
 cmake >= 2.8
@@ -36,7 +45,10 @@ libhugetlbfs-devel
 libpcap-devel
 
 #### Building PF-ring ####
+You can get pfring packages straight from ntop via their mirrors for certain systems/kernels. This is generally preferable.
+
 The pfring source is available at ntop.org. You'll be building some userland libraries, custom drivers for your network card, and the pfring kernel module. The latter two will be specific to you kernel version, and will have to be rebuilt and reinstalled if you update your kernel.
+
 
 To build pfring you'll need the following:
 bison 

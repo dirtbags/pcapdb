@@ -1,9 +1,9 @@
-#### Overview ####
+#### Overview
 This directory houses the python side of PcapDB. It is a
 Django project that sets up the database used by the capture
 system as well as the API and GUI portions of the interface.
 
-##### Directory Structure #####
+##### Directory Structure
 
  apps/ - Django app modules. Each module has a README detailing what should go in them.
    apps/core - A module containing components shared by both capture nodes and the search head.
@@ -18,5 +18,5 @@ system as well as the API and GUI portions of the interface.
  manage.py - The standard django manage.py script.
  runserver - A shortcut for running the test server on a port specified in the pcapdb config.
 
-#### Configuration ####
+#### Configuration
 Before you can run the PcapDB interface components, you must first configure it. An example configuration file is available in etc/.

@@ -1,8 +1,8 @@
-PY_VERS=3.4
-
 # Running pip below without pointing to the postgres bin path will fail.
 PGSQL_BINPATH="$(shell dirname $$(locate -r 'pg_config$$' | sort | tail -1))"
 PATH_EXPORT=export PATH=$$PATH:${PGSQL_BINPATH}:/usr/local/bin;
+
+PYTHON3_PATH=$(shell which python3)
 
 # The proxy info for you site
 PROXY=
@@ -13,7 +13,6 @@ ifneq "${PROXY}" ""
 endif
 
 DESTDIR=/var/pcapdb
-RABBITMQCTL=/usr/sbin/rabbitmqctl
 DD=/bin/dd
 # This is used to create a password, not a password hash. As such, it's ok to use
 # SHA rather a suitable password hasher like crypt.
@@ -21,7 +20,7 @@ HASHER=/usr/bin/sha512sum
 SHRED=/usr/bin/shred
 
 RSYSLOGD=/etc/rsyslog.d
-NGINXD=/etc/nginx/conf.d
+NGINX=/etc/nginx
 LOGROTATED=/etc/logrotate.d
 SUDOERSD=/etc/sudoers.d
 
@@ -44,20 +43,8 @@ install-monolithic: install-common capture-node-configs search-head-configs comm
 
 # Create the python ${DESTDIR}/bin/python that will run all our python code
 ${DESTDIR}/bin/python:
-	${PATH_EXPORT} /usr/local/bin/virtualenv -p /usr/local/bin/python${PY_VERS} ${DESTDIR}
-
-# Setup rabbitmq for use with PcapDB
-# This only needs to run on the search head.
-rabbitmq:
-	-${RABBITMQCTL} delete_user guest
-	# This generates our rabbitmq password
-	${DD} if=/dev/urandom count=1 bs=512 | ${HASHER} - | head -c 16 > /tmp/.rabbitmq_pass
-	-${RABBITMQCTL} delete_user pcapdb
-	${RABBITMQCTL} add_user pcapdb $$(cat /tmp/.rabbitmq_pass)
-	${RABBITMQCTL} set_permissions -p / pcapdb '.*' '.*' '.*'
-	echo "Setting the rabbitmq/amqp password in etc/pcapdb.cfg"
-	sed -i "s/^#\? *amqp_password *=.*$$/amqp_password=$$(cat /tmp/.rabbitmq_pass)/" ${DESTDIR}/etc/pcapdb.cfg
-	shred /tmp/.rabbitmq_pass
+	updatedb
+	${PATH_EXPORT} env virtualenv -p ${PYTHON3_PATH} ${DESTDIR}
 
 SYSTEM_DIRS=${DESTDIR}/capture ${DESTDIR}/capture/index ${DESTDIR}/log ${DESTDIR}/static ${DESTDIR}/etc ${DESTDIR}/media
 
@@ -69,7 +56,7 @@ ifneq "${DESTDIR}" "$(shell pwd)"
 endif
 	mkdir -p ${SYSTEM_DIRS}
 	chown ${CAPTURE_USER}:${CAPTURE_GROUP} ${SYSTEM_DIRS}
-	chmod g+s ${CAPTURE_GROUP} ${DESTDIR}/log
+	chmod g+s ${DESTDIR}/log
 
 core: setup_dirs 
 ifneq "${DESTDIR}" "$(shell pwd)"
@@ -82,20 +69,27 @@ else
 endif
 	if [ ! -e ${DESTDIR}/etc/pcapdb.cfg ]; then install -b ${INSTALL_PERMS} etc/pcapdb.cfg.example ${DESTDIR}/etc/pcapdb.cfg; fi
 
+SUPERVISORD_CONF=$(shell find /etc -name supervisord.conf)
 common-configs: ${DESTDIR}/etc/syslog.conf ${DESTDIR}/etc/logrotate.conf ${DESTDIR}/etc/sudoers ${DESTDIR}/etc/supervisord_common.conf
-	-ln -s ${DESTDIR}/etc/syslog.conf ${RSYSLOGD}/pcapdb.conf
+	if [ ! -e ${RSYSLOGD} ]; then ln -s ${DESTDIR}/etc/syslog.conf ${RSYSLOGD}/pcapdb.conf; fi
 	service rsyslog restart
-	-ln -s ${DESTDIR}/etc/logrotate.conf ${LOGROTATED}/pcapdb
+	if [ ! -e ${LOGROTATED} ]; then ln -s ${DESTDIR}/etc/logrotate.conf ${LOGROTATED}/pcapdb; fi
 	install -g root -o root -m 0440 ${DESTDIR}/etc/sudoers /etc/sudoers.d/pcapdb.sudoers
 	# Tell supervisord to include our supervisord conf
-	if ! grep -E "^files = ${DESTDIR}/etc/supervisord\*.conf" /etc/supervisord.conf; then \
-		echo "[include]"								>> /etc/supervisord.conf; \
-		echo "files = ${DESTDIR}/etc/supervisord*.conf"	>> /etc/supervisord.conf; \
+	if ! grep -E "^files = ${DESTDIR}/etc/supervisord\*.conf" ${SUPERVISORD_CONF}; then \
+		echo "[include]"                                >> ${SUPERVISORD_CONF}; \
+		echo "files = ${DESTDIR}/etc/supervisord*.conf"	>> ${SUPERVISORD_CONF}; \
 	fi
-	service supervisord restart
+	service supervisor restart
 
-search-head-configs: ${DESTDIR}/etc/nginx.conf ${DESTDIR}/etc/supervisord_sh.conf
-	-ln -s ${DESTDIR}/etc/nginx.conf ${NGINXD}/etc/nginx/conf.d/pcapdb.conf
+search-head-configs: ${DESTDIR}/etc/nginx.conf ${DESTDIR}/etc/supervisord_sh.conf ${DESTDIR}/etc/uwsgi.ini
+	if [ ! -e /etc/ssl/${HOSTNAME}.pem ]; then \
+		echo "\033[31mNo SSL certificate found. Generating a self-signed cert now.";\
+		echo "You should replace this with a properly signed cert.\033[0m";\
+		openssl req -x509 -newkey rsa:4096 -keyout /etc/ssl/${HOSTNAME}.key -out /etc/ssl/${HOSTNAME}.pem -days 365 -nodes;\
+	fi
+	if [ -e ${NGINX}/sites-enabled/default ]; then rm ${NGINX}/sites-enabled/default; fi
+	if [ ! -e ${NGINX}/conf.d/pcapdb.conf ]; then ln -s ${DESTDIR}/etc/nginx.conf ${NGINX}/conf.d/pcapdb.conf; fi
 	service nginx reload
 
 capture-node-configs: ${DESTDIR}/etc/supervisord_cn.conf
@@ -134,8 +128,9 @@ ${DESTDIR}/etc/sudoers:
 ${DESTDIR}/etc/supervisord_common.conf: etc/supervisord_common.conf.tmpl
 	sed 's/DESTDIR/${DESTDIR_ESCAPED}/g' etc/supervisord_common.conf.tmpl > $@	
 
+WWW_USER=$(shell for user in nginx www-data; do if id $$user > /dev/null; then echo $$user; fi; done)
 ${DESTDIR}/etc/supervisord_sh.conf: etc/supervisord_sh.conf.tmpl
-	sed 's/DESTDIR/${DESTDIR_ESCAPED}/g' etc/supervisord_sh.conf.tmpl > $@	
+	sed 's/DESTDIR/${DESTDIR_ESCAPED}/g;s/WWW_USER/${WWW_USER}/g' etc/supervisord_sh.conf.tmpl > $@	
 
 ${DESTDIR}/etc/supervisord_cn.conf: etc/supervisord_cn.conf.tmpl
 	sed 's/DESTDIR/${DESTDIR_ESCAPED}/g' etc/supervisord_cn.conf.tmpl > $@	

@@ -17,7 +17,7 @@ netaddr             # required for netfields
 # https://bitbucket.org/schinckel/django-postgres/get/ee37d8ece8e4.zip
 path.py
 django-celery
-celery
+celery<4.0
 uwsgi
 validate_email
 daemonize

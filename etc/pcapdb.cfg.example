@@ -1,11 +1,18 @@
 [pcapdb]
-# A host can be both an indexer and a search head, but there can only be one search head.
-indexer = False
+# A host can be both an capture_node and a search head, but there can only be one search head.
+capture_node = False
 search_head = False
 
+# The host on which the search head is located. This is required.
+search_head_host=
+
 # Required
-db_user = 
+db_user = capture
+# The password for the search head's database. The Capture Node databases don't use password auth.
 db_pass = 
+
+# Required for the search head
+session_secret = 
 
 # Defaults to 'pcapdb'
 # db_name = 

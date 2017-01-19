@@ -266,7 +266,7 @@ int or_results(struct search_t * search,
     return ret;
 }
 
-inline int filter_flow(
+static inline int filter_flow(
         struct fcap_flow_key * flow,
         struct timeval32 * start,
         struct timeval32 * end,
