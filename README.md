@@ -92,12 +92,12 @@ login_gui search_head_gui capture_node_api
 ./bin/python core/manage.py migrate
 ```
 
-## Web server setup ## 
+## Web server setup 
 The Makefile will generate a self-signed cert for your server for you if an installed one doesn't
 already exist at '/etc/ssl/<HOSTNAME>.pem'. You should probably change that to something that isn't
 self-signed.
 
-## Firewall Notes ## 
+## Firewall Notes 
  - The Capture Nodes don't open any incoming ports for PcapDB, all communication is out to the Search Head.
  - Using IPtables or other system firewalls on the Capture Nodes is discouraged. Instead
    put them on a normally inaccessible network.
@@ -105,7 +105,7 @@ self-signed.
    25672 (rabbitmq). 
    - It's ok to us IP tables on the Search Head (and will eventually be automatic)
 
-# Running the system # 
+# Running the system 
 If you installed anywhere except 'in place', the system should attempt to run itself via
 supervisord.
  - The `core/runserver` and `core/runcelery` scripts will be helpful when not running the system in
