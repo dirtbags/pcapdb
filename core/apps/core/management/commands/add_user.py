@@ -38,7 +38,8 @@ class Command(BaseCommand):
         if User.objects.filter(username=ser.validated_data['username']).exists():
             print ('User {} already exists.'.format(username))
 
-        user = User.objects.create_user(username, email=ser.validated_data['email'],
+        user = User.objects.create_user(username=ser.validated_data['username'],
+                                        email=ser.validated_data['email'],
                                         first_name=ser.validated_data['first_name'],
                                         last_name=ser.validated_data['last_name'])
         user.extra = UserExtraModel(type=user_type, timezone=ser.validated_data['timezone'])
