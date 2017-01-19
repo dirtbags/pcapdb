@@ -27,8 +27,6 @@ class Command(BaseCommand):
         if len(args) != 4:
             print("Usage: create_admin <username> <first_name> <last_name> <email>")
 
-        options['user_type'] = UserExtraModel.BASIC
-        options['timezone'] = 'UTC'
 
         ser = UserAddView.PostSerializer(data=options)
         if not ser.is_valid():
@@ -41,7 +39,7 @@ class Command(BaseCommand):
         user = User.objects.create_user(username, email=ser.validated_data['email'],
                                         first_name=ser.validated_data['first_name'],
                                         last_name=ser.validated_data['last_name'])
-        user.extra = UserExtraModel(type=user_type, timezone=ser.validated_data['timezone'])
+        user.extra = UserExtraModel(type=UserExtraModel.BASIC, timezone='UTC')
 
         confirm = UserConfirmation.make_confirm(user)
         info.append(confirm.send_confirmation(request))
