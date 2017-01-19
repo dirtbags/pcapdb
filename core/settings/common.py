@@ -154,6 +154,10 @@ CELERY_TASK_STATE_UPDATE_PERIOD = 1.5
 DEBUG = False
 
 ALLOWED_HOSTS = []
+if IS_SEARCH_HEAD:
+    ALLOWED_HOSTS.append(NODE_NAME)
+    if config.has_option('pcapdb', 'allowed_hosts'):
+        ALLOWED_HOSTS.append(config.get('pcapdb', 'allowed_hosts'))
 
 CACHES = {
     'default': {

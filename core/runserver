@@ -2,4 +2,10 @@
 
 HTTP_PORT=$(grep ^http_port ../etc/pcapdb.cfg | awk -F= '{{ print $2 }}' | tr -d '[[:space:]]')
 
-../bin/python manage.py runserver $(hostname):${HTTP_PORT}
+if [ -z "${HTTP_PORT}" ]; then
+    URI=$(hostname)
+else
+    URI=$(hostname):${HTTP_PORT}
+fi
+
+../bin/python manage.py runserver ${URI}
