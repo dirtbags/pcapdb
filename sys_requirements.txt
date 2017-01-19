@@ -16,6 +16,9 @@ python-devel
 python-pip 
 python-virtualenv # If you don't have a package for this, it can be obtained via pip
 
+# Needed on Debian based systems
+uwsgi-plugin-python 
+
 # Needed py the python ldap package
 libsasl2-dev
 libldap2-dev
