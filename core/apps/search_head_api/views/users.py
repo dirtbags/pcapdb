@@ -3,6 +3,7 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework.renderers import JSONRenderer, BrowsableAPIRenderer
 from rest_framework import serializers
+from rest_framework.permissions import AllowAny
 
 from apps.search_head_api.views.base import SearchHeadAPIView
 from apps.search_head_api.models.auth import UserConfirmation, UserExtraModel
@@ -201,6 +202,8 @@ class UserRemoveGroupView(SearchHeadAPIView):
 class UserPasswordResetView(APIView):
     """View for resetting a user's password. Note that this view does not require authentication."""
 
+    permission_classes = (AllowAny,)
+
     class PostSerializer(serializers.Serializer):
         username = serializers.RegexField(USER_GROUP_NAME_RE)
         email = serializers.EmailField()
@@ -241,6 +244,7 @@ class UserPasswordResetView(APIView):
 
 
 class UserPasswordSetView(APIView):
+    permission_classes = (AllowAny,)
     renderer_classes = (JSONRenderer, BrowsableAPIRenderer)
 
     class PostSerializer(serializers.Serializer):
