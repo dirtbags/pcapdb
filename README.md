@@ -1,3 +1,4 @@
+<img src="https://cloud.githubusercontent.com/assets/22897558/22356169/8f6e0b16-e3ec-11e6-8695-2273424c2b06.png" width="200" />
 # Overview 
 PcapDB is a distributed, search-optimized open source packet capture system. It was designed to
 replace expensive, commercial appliances with off-the-shelf hardware and a free, easy to manage 
