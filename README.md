@@ -9,6 +9,9 @@ than 1% the size of the captured data).
 
 For hardware requirements, see [HARDWARE.md](HARDWARE.md).
 
+## DESTDIR
+Many things in this file refer to DESTDIR as a pathname prefix. The default, and that used by future pcapdb packages, is `/var/pcapdb`.
+
 ## Architectural Overview 
 A PcapDB installation consists of a Search Head and one or more Capture Nodes. The Search Head can
 also be a Capture Node, or it can be a VM somewhere else. Wherever it is, the Search Head must be
@@ -47,6 +50,25 @@ After running 'make install', there are a few more steps to perform.
 
 ## DESTDIR/etc/pcapdb.cfg 
 This is the main Pcapdb config file. You must set certain values before PcapDB will run at all.
+
+## RabbitMQ 
+RabbitMQ is a fast and efficient messaging system used to communicate simple messages between a
+distributed network of hosts. As with Celery, RabbitMQ is really meant for distributing messages to
+the 'first available' worker, but in PcapDB all of our messages are to a specific worker. As such,
+the PcapDB rabbitMQ instance automatically creates a specific message queue for each Capture Node,
+as well as a queue for the Search Head. The command 'rabbitmqctl' gives visibility into the
+currently active queues. For further debugging/introspection, the rabbitmq admin plugin provides a
+web interface that can be quite useful.
+
+RabbitMQ need only be configured on the search head. We've provided a script that does most of the
+work:
+```
+$ /var/pcapdb/core/bin/rabbitmq_setup.sh
+```
+
+The above script will setup rabbitmq and a global user used by the search head and all capture
+nodes. The login information is automatically populated in /var/pcapdb/etc/pcapdb.cfg on the search
+head, but will need to be added to the pcapdb.cfg file for each Capture Node manually.
 
 ## Database Setup 
 The setup varies significantly between the search head and capture nodes. 
@@ -109,10 +131,13 @@ self-signed.
 # Running the system 
 If you installed anywhere except 'in place', the system should attempt to run itself via
 supervisord.
+ - The `supervisorctl` command can give you the status of the various components of the system. Capture has to be started manually from within the interface, so you shouldn't expect it to be running initially.
  - The `core/runserver` and `core/runcelery` scripts will be helpful when not running the system in
    production.
- - To run capture, use the capture_runner.py script: 
+ - Similarly, to run capture outside of production, use the capture_runner.py script: 
    `DESTDIR/bin/python DESTDIR/core/bin/capture_runner.py`
+   - DESTDIR/log/django.log will tell you the exact command used to start capture, if for some reason it's failing to start.
+   - DESTDIR/log/capture.log will usually give you some idea why capture is failing to run. If this file doesn't exist, either capture has never successfully ran at all, or rsyslog isn't forwarding the logs to the right place.
 
 ## System Component Hierarchy 
 The PcapDB Search Head install consists of a PostgreSQL server, a Celery task queueing system, a
@@ -129,7 +154,7 @@ hosts must be able to connect to the Search Head database.
 Each Capture Node also has a database that keeps track of the available disk chunks and indexes on
 that node. This database is only accessible to the capture node itself.
 
-This has to be set up manually. See below for more information.
+This has to be set up manually. See above for more information.
 
 ### Celery 
 Celery is a system for distributing and scheduling tasks across a network of workers. PcapDB manages
@@ -141,24 +166,6 @@ task queues (see RabbitMQ below).
 
 Celery is configured automatically on system install, and the process is managed via supervisord.
 
-### RabbitMQ 
-RabbitMQ is a fast and efficient messaging system used to communicate simple messages between a
-distributed network of hosts. As with Celery, RabbitMQ is really meant for distributing messages to
-the 'first available' worker, but in PcapDB all of our messages are to a specific worker. As such,
-the PcapDB rabbitMQ instance automatically creates a specific message queue for each Capture Node,
-as well as a queue for the Search Head. The command 'rabbitmqctl' gives visibility into the
-currently active queues. For further debugging/introspection, the rabbitmq admin plugin provides a
-web interface that can be quite useful.
-
-RabbitMQ need only be configured on the search head. We've provided a script that does most of the
-work:
-```
-$ /var/pcapdb/core/bin/rabbitmq_setup.sh
-```
-
-The above script will setup rabbitmq and a global user used by the search head and all capture
-nodes. The login information is automatically populated in /var/pcapdb/etc/pcapdb.cfg on the search
-head, but will need to be added to the pcapdb.cfg file for each Capture Node manually.
 
 ### uWSGI and Nginx 
 The web interface for PcapDB is built in the Python Django system, which is served via a unix
