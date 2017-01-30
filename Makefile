@@ -65,7 +65,10 @@ endif
 	chmod u+s ${DESTDIR}/log
 	# If we have a syslog user, then set the log directory to that as the group, and make
 	# the directory group writable.
-	if id ${SYSLOG_USER}; then chgrp ${SYSLOG_USER} ${DESTDIR}/log; chown g+w ${DESTDIR}; fi
+	if id ${SYSLOG_USER}; then \
+		chgrp ${SYSLOG_USER} ${DESTDIR}/log\
+		chown g+w ${DESTDIR} \
+	fi
 
 core: setup_dirs 
 ifneq "${DESTDIR}" "$(shell pwd)"
@@ -99,7 +102,7 @@ search-head-configs: ${DESTDIR}/etc/nginx.conf ${DESTDIR}/etc/supervisord_sh.con
 	fi
 	if [ -e ${NGINX}/sites-enabled/default ]; then rm ${NGINX}/sites-enabled/default; fi
 	if [ ! -e ${NGINX}/conf.d/pcapdb.conf ]; then ln -s ${DESTDIR}/etc/nginx.conf ${NGINX}/conf.d/pcapdb.conf; fi
-	service nginx restart
+	service nginx reload
 
 capture-node-configs: ${DESTDIR}/etc/supervisord_cn.conf
 
