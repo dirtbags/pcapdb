@@ -5,6 +5,7 @@
 
 # Postgres provides package servers for each of their versions most major linux distributions.
 postgresql-server>=9.4
+postgresql-devel
 
 # You'll need tshark (or wireshark), specifically the mergecap command. We'll probably, eventually, write our own to drop this dependency.
 tshark
@@ -12,6 +13,8 @@ tshark
 # ius.io is a good source for python3 RPMs 
 python >= 3.4
 # You'll need to following in the above python version
+# Note that the Makefile assumes that you'll have a python3 executable somewhere on your path, 
+#   and most packages make a softlink from python3 to python3.x by default. Some don't.
 python-devel
 python-pip 
 python-virtualenv # If you don't have a package for this, it can be obtained via pip
@@ -19,9 +22,15 @@ python-virtualenv # If you don't have a package for this, it can be obtained via
 # Needed on Debian based systems
 uwsgi-plugin-python 
 
-# Needed py the python ldap package
+# The makefile uses mlocate to check where certain things are. 
+mlocate
+
+# Needed by the python ldap package
+(On Debian/Ubuntu)
 libsasl2-dev
 libldap2-dev
+(On Redhat)
+openldap-devel
 
 # rabbitmq is available via EPEL.
 # On the searchhead
@@ -32,7 +41,8 @@ supervisor
 # Only on the indexer hosts, you'll need the following 
 librabbitmq
 ethtool
-pfring  >= 6.2 # See Building PF-ring below.
+pfring  >= 6.2
+# For pfring, ntop.org provides RPM's at http://packages.ntop.org/
 
 # On the search head, you'll need the following
 nginx
@@ -47,21 +57,18 @@ openssl-devel
 libhugetlbfs-devel
 libpcap-devel
 
-#### Building PF-ring ####
-You can get pfring packages straight from ntop via their mirrors for certain systems/kernels. This is generally preferable.
+#### Building PF-ring ZC Drivers ####
+You can get pfring packages straight from ntop via their mirrors for certain systems/kernels. This
+is generally preferable for the main components of the package. To use PFRING in ZC mode, which is
+greatly preferred, you'll need drivers specific to your network card and kernel.
 
-The pfring source is available at ntop.org. You'll be building some userland libraries, custom drivers for your network card, and the pfring kernel module. The latter two will be specific to you kernel version, and will have to be rebuilt and reinstalled if you update your kernel.
-
-
-To build pfring you'll need the following:
+To build the drivers you'll need the following:
 bison 
 flex 
 kernel-headers
 kernel-devel
 
 Within the pfring source, run make and make install in:
- - userland/lib
- - kernel
  - drivers/ZC/intel/<your_card's_driver>
 
 You should also ensure your card's driver isn't overwritten by another package automatically. RHEL has kmod-<driver> packages that should be removed, for instance.
