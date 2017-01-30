@@ -18,7 +18,7 @@ Search Head.
 # Requirements 
 PcapDB is designed to work on Linux servers only. It was developed on both Redhat Enterprise and Debian systems, but its primary testbed has so far been Redhat based.
 
-`sys_requirements.txt` contains a list of the packages required to run and build pcapdb.
+[sys_requirements.txt](sys_requirements.txt) contains a list of the packages required to run and build pcapdb.
 
 requirements.txt contains python/pip requirements. They will be installed via 'make install'.
 
