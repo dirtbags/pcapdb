@@ -22,6 +22,7 @@ class ResultField(serializers.DictField):
 class TaskMetaSerializer(serializers.ModelSerializer):
     class Meta:
         model = TaskMeta
+        fields = '__all__'
 
     meta = serializers.DictField()
     result = ResultField()
@@ -37,6 +38,7 @@ class UserSerializer(serializers.ModelSerializer):
 class TaskTrackSerializer(serializers.ModelSerializer):
     class Meta:
         model = TaskTrack
+        fields = '__all__'
 
     task_id = serializers.CharField()
     task = TaskMetaSerializer()

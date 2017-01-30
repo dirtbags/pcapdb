@@ -259,7 +259,7 @@
       17: 'udp'
     };
     function date_render(cell, cellData, rowData, row, col) {
-        var date = new Date(cellData);
+        var date = Date(cellData);
 
         var time = moment(date).format('h:mm:ss.SSSS a');
         $(cell).html(time);

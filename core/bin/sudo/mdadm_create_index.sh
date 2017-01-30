@@ -7,7 +7,8 @@
 
 MDADMIN_PATH=/sbin/mdadm
 
-source libs.sh
+PATH="$( dirname "${BASH_SOURCE[0]}" )"
+source ${PATH}/libs.sh
 
 for arg in ${@:4}; do
     if ! check_arg "$arg" "$DEVICE_RE"; then
@@ -19,4 +20,7 @@ if check_arg "$1" "$MD_DEVICE_RE" && check_arg "$2" "$DEVICE_RE"; then
     ${MDADMIN_PATH} --create "$1" -v --raid-devices=2 --level=1 $2 missing
     exit $?
 fi
+
+/sbin/udevadm trigger
+
 exit 2

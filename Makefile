@@ -24,6 +24,9 @@ NGINX=/etc/nginx
 LOGROTATED=/etc/logrotate.d
 SUDOERSD=/etc/sudoers.d
 
+# If syslog writes as a special user (rather than root), set that here.
+SYSLOG_USER=syslog
+
 ifeq "${DESTDIR}" "$(shell pwd)"
   CAPTURE_USER="$(shell whoami)"
   CAPTURE_GROUP=users
@@ -55,8 +58,17 @@ ifneq "${DESTDIR}" "$(shell pwd)"
 	chown ${CAPTURE_USER}:${CAPTURE_GROUP} ${DESTDIR}
 endif
 	mkdir -p ${SYSTEM_DIRS}
+	# Make sure all the directories are owned by the capture user/group.
 	chown ${CAPTURE_USER}:${CAPTURE_GROUP} ${SYSTEM_DIRS}
-	chmod g+s ${DESTDIR}/log
+	# The log directory needs to have any files created in it have the CAPTURE_USER as the owner.
+	# (That's what SETUID does for directories)
+	chmod u+s ${DESTDIR}/log
+	# If we have a syslog user, then set the log directory to that as the group, and make
+	# the directory group writable.
+	if id ${SYSLOG_USER}; then \
+		chgrp ${SYSLOG_USER} ${DESTDIR}/log\
+		chown g+w ${DESTDIR} \
+	fi
 
 core: setup_dirs 
 ifneq "${DESTDIR}" "$(shell pwd)"
@@ -74,7 +86,7 @@ common-configs: ${DESTDIR}/etc/syslog.conf ${DESTDIR}/etc/logrotate.conf ${DESTD
 	if [ ! -e ${RSYSLOGD} ]; then ln -s ${DESTDIR}/etc/syslog.conf ${RSYSLOGD}/pcapdb.conf; fi
 	service rsyslog restart
 	if [ ! -e ${LOGROTATED} ]; then ln -s ${DESTDIR}/etc/logrotate.conf ${LOGROTATED}/pcapdb; fi
-	install -g root -o root -m 0440 ${DESTDIR}/etc/sudoers /etc/sudoers.d/pcapdb.sudoers
+	install -g root -o root -m 0440 ${DESTDIR}/etc/sudoers /etc/sudoers.d/pcapdb
 	# Tell supervisord to include our supervisord conf
 	if ! grep -E "^files = ${DESTDIR}/etc/supervisord\*.conf" ${SUPERVISORD_CONF}; then \
 		echo "[include]"                                >> ${SUPERVISORD_CONF}; \
@@ -107,8 +119,9 @@ HOSTNAME=$(shell hostname -f)
 ${DESTDIR}/etc/nginx.conf: etc/nginx.conf.tmpl
 	sed 's/DESTDIR/${DESTDIR_ESCAPED}/g;s/HOSTNAME/${HOSTNAME}/g' etc/nginx.conf.tmpl > $@
 
+.PHONY: ${DESTDIR}/etc/logrotate.conf
 ${DESTDIR}/etc/logrotate.conf:
-	echo "${DESTDIR}/log/* {" > $@
+	echo "${DESTDIR}/log/*.log {" > $@
 	echo "  daily"		>> $@
 	echo "  missingok"	>> $@
 	echo "  compress"	>> $@
@@ -117,13 +130,15 @@ ${DESTDIR}/etc/logrotate.conf:
 
 # Most of the commands that need to be run as root are wrapped in shell
 # scripts to severely limit their arguments. 
-${DESTDIR}/etc/sudoers:
+.PHONY: ${DESTDIR}/etc/sudoers
+${DESTDIR}/etc/sudoers: 
 	echo "capture	ALL=NOPASSWD:${DESTDIR}/core/bin/sudo/*"		>  $@
 	echo "# Note that the * in the arguments below is usually "		>> $@ 
 	echo "# dangerous. We're relying on the fact that readlink "	>> $@
 	echo "# takes only a single filename argument."					>> $@
 	echo "capture	ALL=NOPASSWD:/bin/readlink -f /proc/[0-9]*/exe" >> $@
 	echo "capture	ALL=NOPASSWD:/bin/umount"						>> $@
+	echo "capture	ALL=NOPASSWD:/sbin/blkid"						>> $@
 
 ${DESTDIR}/etc/supervisord_common.conf: etc/supervisord_common.conf.tmpl
 	sed 's/DESTDIR/${DESTDIR_ESCAPED}/g' etc/supervisord_common.conf.tmpl > $@	

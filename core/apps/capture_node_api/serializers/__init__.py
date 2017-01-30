@@ -6,6 +6,7 @@ from apps.capture_node_api.models.status import Status
 class StatusSerializer(serializers.ModelSerializer):
     class Meta:
         model = Status
+        fields = '__all__'
 
     is_capture_node = serializers.BooleanField()
     capture_status = serializers.ListField(
@@ -33,6 +34,7 @@ class StatsSerializer(serializers.ModelSerializer):
     class Meta:
         # class attributes
         model = Stats
+        fields = '__all__'
 
     index = IndexSerializer()
 
@@ -40,11 +42,13 @@ class StatsSerializer(serializers.ModelSerializer):
 class DiskSerializer(serializers.ModelSerializer):
     class Meta:
         model = Disk
+        fields = '__all__'
 
 
 class InterfaceSerializer(serializers.ModelSerializer):
     class Meta:
         model = Interface
+        fields = '__all__'
 
     mac = serializers.CharField()
     addresses = serializers.DictField()

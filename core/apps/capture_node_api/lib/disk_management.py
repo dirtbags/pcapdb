@@ -89,10 +89,11 @@ class Device:
     @property
     def uuid(self):
         # Get the filesystem's UUID using the blkid cmd.
-        blkid_cmd = [BLKID_CMD, '-o', 'value', '-s', 'UUID', self.dev_path]
-        blkid_proc = subprocess.Popen(blkid_cmd, stdout=subprocess.PIPE, stderr=subprocess.DEVNULL,
+        blkid_cmd = [settings.SUDO_PATH, BLKID_CMD, '-o', 'value', '-s', 'UUID', self.dev_path]
+        blkid_proc = subprocess.Popen(blkid_cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE,
                                       universal_newlines=False)
-        uuid = bytes(blkid_proc.stdout.read().strip()).decode('utf8')
+        data = blkid_proc.stdout.read()
+        uuid = bytes(data.strip()).decode('utf8')
         if uuid:
             return uuid
         else:
@@ -226,7 +227,8 @@ class Device:
             return self._MOUNT_MAP[self.alias]['fs']
         elif os.getuid() == 0:
             # If we can't get the filesystem from the mount table, check with blkid.
-            blkid_cmd = [BLKID_CMD, '-o', 'value', '-s', 'TYPE', '-p', self.dev_path]
+            blkid_cmd = [settings.SUDO_PATH, BLKID_CMD, '-o', 'value', '-s', 'TYPE', 
+                         '-p', self.dev_path]
             blkid_proc = subprocess.Popen(blkid_cmd, stdout=subprocess.PIPE)
             fs = bytes(blkid_proc.stdout.read().strip()).decode('utf8')
             return fs if fs else None
@@ -235,7 +237,7 @@ class Device:
 
     @property
     def label(self):
-        blkid_cmd = [BLKID_CMD, '-o', 'value', '-s', 'LABEL', self.dev_path]
+        blkid_cmd = [settings.SUDO_PATH, BLKID_CMD, '-o', 'value', '-s', 'LABEL', self.dev_path]
         blkid_proc = subprocess.Popen(blkid_cmd, stdout=subprocess.PIPE)
         label = blkid_proc.stdout.read().strip()
         label = bytes(label).decode('utf8')
@@ -400,25 +402,6 @@ class Device:
                 empty_slots.append(EmptySlot(encl, slot))
 
         return empty_slots
-
-    def mount(self, dest):
-        """
-        Mount this device at dest
-        :param dest: The path to where this disk should be mounted.
-        :return: None
-        """
-        if self.mountpoint is not None:
-            if self.mountpoint != dest:
-                raise RuntimeError("Device already mounted somewhere else: {}".format(
-                    self.mountpoint))
-            else:
-                return
-
-        from apps.capture_node_api.models.capture import Disk
-
-        Disk.mount_uuid(self.uuid, dest)
-
-        self.refresh()
 
     def as_dict(self):
         d = {}
@@ -1012,10 +995,7 @@ def init_index_device(*devices, task=None):
     # Create a RAID 1, but with only one workind disk.
     mdadm_cmd = [settings.SUDO_PATH, CREATE_INDEX_CMD, '/dev/md{0:d}'.format(md_num),
                  dev_obs[0].dev_path]
-
-    # Now add the second disk as a spare
-    mdadm_add_cmd = [settings.SUDO_PATH, ADD_SPARE_CMD, '/dev/md{0:d}'.format(md_num),
-                     dev_obs[1].dev_path]
+    print(mdadm_cmd)
 
     proc = subprocess.Popen(mdadm_cmd, stdout=subprocess.PIPE,
                            stderr=subprocess.PIPE, stdin=subprocess.PIPE)
@@ -1023,11 +1003,15 @@ def init_index_device(*devices, task=None):
     if proc.poll() != 0:
         raise RuntimeError("Raid creation failed: {}.".format(errs))
 
-    proc = subprocess.Popen(mdadm_add_cmd, stdout=subprocess.PIPE,
-                            stderr=subprocess.PIPE, stdin=subprocess.PIPE)
-    outs, errs = proc.communicate(input=b'y', timeout=5)
-    if proc.poll() != 0:
-        raise RuntimeError("Fail/ed to add second device: {}.".format(errs))
+    if len(dev_obs) == 2:
+        # Now add the second disk as a spare
+        mdadm_add_cmd = [settings.SUDO_PATH, ADD_SPARE_CMD, '/dev/md{0:d}'.format(md_num),
+                         dev_obs[1].dev_path]
+        proc = subprocess.Popen(mdadm_add_cmd, stdout=subprocess.PIPE,
+                                stderr=subprocess.PIPE, stdin=subprocess.PIPE)
+        outs, errs = proc.communicate(input=b'y', timeout=5)
+        if proc.poll() != 0:
+            raise RuntimeError("Fail/ed to add second device: {}.".format(errs))
 
     if task is not None:
         task.update_state(state='WORKING', meta={'msg': 'Formatting device. This may take a '

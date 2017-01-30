@@ -161,6 +161,8 @@ def search_node(self, search_txt, start, end, proto, result_url, packets=False):
     res = requests.put(result_url, open(final_result, 'rb'),
                        headers={'Content-Disposition': 'attachment; filename=data',
                                 'Content-Type': 'application/octet-stream'},
+                       # TODO: This should be True. Disabled for demo environment for now.
+                       verify=False,
                        # Disable any proxies we might have configured.
                        proxies={'https': None, 'http': None})
     res.close()

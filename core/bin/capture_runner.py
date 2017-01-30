@@ -45,7 +45,7 @@ def main():
 
         elif status.capture == status.STARTED:
             cap_status = status.capture_status
-            if cap_status[0] != status.OK:
+            if cap_status[0] == status.NOT_OK:
                 # Capture should be started, but isn't
                 log.info("Capture was supposed to be running, but wasn't.")
                 status.start_capture()

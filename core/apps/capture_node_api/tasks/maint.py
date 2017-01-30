@@ -31,9 +31,10 @@ def clean_indexes(self):
 
     # Delete any stats that predate any currently existing indexes
     oldest_index = Index.objects.order_by('start_ts').first()
-    stats = Stats.objects.filter(capture_node__hostname=settings.NODE_NAME,
-                                 minute__lt=oldest_index.start_ts)
-    stats.delete()
+    if oldest_index is not None:
+        stats = Stats.objects.filter(capture_node__hostname=settings.NODE_NAME,
+                                     minute__lt=oldest_index.start_ts)
+        stats.delete()
 
     # Figure out how many indexes we'll need to expire next time.
     try:

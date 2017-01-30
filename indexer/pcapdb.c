@@ -370,7 +370,7 @@ int pcapdb_start_threads(
     // Create our capture threads.
     for (i = 0; i < iface_name_count; i++) {
         struct capture_state *cap_state = capture_state_init(iface_names[i], state);
-        INFO("Starting capture thread #%d/%d", i+1, iface_name_count);
+        INFO("Starting capture thread #%d/%d (%s)", i+1, iface_name_count, cap_state->interface);
 
         // Set up this interface to start capturing.
         res = prepare_interface(cap_state);
@@ -611,7 +611,7 @@ void write_status(struct system_state * state) {
             fprintf(status_file, ",%s", state_strs[state->index_threads[i]->status]);
         }
         fprintf(status_file, "],\n 'output_threads': [");
-        fprintf(status_file, "%s", state_strs[state->output_threads[1]->status]);
+        fprintf(status_file, "%s", state_strs[state->output_threads[0]->status]);
         for (i=1; i < state->output_thread_count; i++) {
             fprintf(status_file, ",%s", state_strs[state->output_threads[i]->status]);
         }

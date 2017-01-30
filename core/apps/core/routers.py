@@ -12,6 +12,9 @@ class BaseRouter:
     # These apps are replicated on both the search head and capture nodes, and use the local
     # database
     UNIVERSAL_APPS = ['contenttypes', 'auth']
+    # These apps should only be on the capture nodes
+    CAPTURE_NODE_APPS = ['capture_node_api']
+    # Anything that isn't universal or a capture node app is a search head app.
 
     def db_for_read(self, model, **hints):
         if model._meta.app_label in self.UNIVERSAL_APPS:
@@ -29,11 +32,11 @@ class BaseRouter:
         if app_label in self.UNIVERSAL_APPS:
             # Universal apps are always migrated.
             return True
-        elif db == 'default' and not settings.IS_SEARCH_HEAD:
+        elif db == 'default' and app_label not in self.CAPTURE_NODE_APPS:
             # Anything else that would use the default db is only migrated on the search head.
-            return False
-        elif db == 'capture_node_api' and not settings.IS_CAPTURE_NODE:
-            # The capture node api is only migrated on capture nodes
-            return False
-        else:
             return True
+        elif db == 'capture_node' and app_label in self.CAPTURE_NODE_APPS:
+            # The capture node api is only migrated on capture nodes
+            return True
+        else:
+            return False

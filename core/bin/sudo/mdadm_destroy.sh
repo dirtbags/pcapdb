@@ -6,8 +6,8 @@
 
 MDADMIN_PATH=/sbin/mdadm
 
-source libs.sh
-
+PATH="$( dirname "${BASH_SOURCE[0]}" )"
+source ${PATH}/libs.sh
 
 for arg in ${@:3}; do
     if ! check_arg "$arg" "$DEVICE_RE"; then

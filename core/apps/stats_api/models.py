@@ -125,8 +125,12 @@ class Stats(models.Model):
             udp = 0
 
         # Get the total number of packets from transports that aren't TCP/UDP
-        transport_other = idx.stats.transportstats_set.exclude(transport__in=[6, 17])\
-                                   .aggregate(models.Sum('count'))['count__sum']/time_base
+        transport_other_q = idx.stats.transportstats_set.exclude(transport__in=[6, 17])\
+                                     .aggregate(models.Sum('count'))['count__sum']
+        if transport_other_q is None:
+            transport_other = 0
+        else:
+            transport_other = transport_other_q/time_base
 
         while minute < idx.end_ts:
             # Calculate fraction of the index contained within this minute.

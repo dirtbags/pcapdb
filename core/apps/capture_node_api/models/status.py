@@ -288,7 +288,6 @@ class Status(SingletonModel):
         env = os.environ.copy()
         env['LD_LIBRARY_PATH'] = '/usr/local/lib'
         env['SITE_ROOT'] = str(settings.SITE_ROOT)
-        print('{} env: {}'.format(datetime.datetime.now(), env))
         proc = subprocess.Popen(capture_cmd, close_fds=True,
                                 env=env)
 
@@ -332,7 +331,7 @@ class Status(SingletonModel):
             log.warning("Process trying to stop capture should be root.")
             return self.NOT_OK
 
-        cmd = ['/bin/kill', '-15', self.pid]
+        cmd = ['/bin/kill', '-15', str(self.pid)]
 
         # Send all known capture pids the TERM signal. This should put them into soft shutdown
         # mode.
@@ -369,7 +368,7 @@ class Status(SingletonModel):
 
         # Try to mount the index disk.
         try:
-            Disk.mount_uuid(self.index_uuid, mount_point)
+            Disk.mount_uuid(self.index_uuid, is_index=True)
         except RuntimeError as err:
             return self.NOT_OK, 'Index device {} could not ' \
                                 'be mounted: {}'.format(self.index_uuid, err)

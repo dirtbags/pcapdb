@@ -7,6 +7,7 @@ from . models import Stats
 class StatsSerializer(serializers.ModelSerializer):
     class Meta:
         model = Stats
+        fields = '__all__'
 
     capture_node = CaptureNodeSerializer()
     interface = serializers.CharField()

@@ -87,7 +87,7 @@ if not (IS_CAPTURE_NODE or IS_SEARCH_HEAD):
 # Paths to commonly used executables
 SUDO_PATH = '/usr/bin/sudo'
 CAPTURE_CMD = SITE_ROOT/'bin'/'capture'
-MERGECAP_PATH = '/usr/sbin/mergecap'
+MERGECAP_PATH = '/usr/bin/mergecap'
 
 SPLASH_TITLE = config.get('pcapdb', 'splash_title', fallback='System Usage Warning')
 SPLASH_TEXT = config.get('pcapdb', 'splash_text',
@@ -109,12 +109,13 @@ SPLASH_TEXT = config.get('pcapdb', 'splash_text',
 FCAP_SIZE = 4*(1024**3)
 
 # The MTU to set on all interfaces. Depending on the capture system used, this may not actually
-# have any effect. We set it to 9710 because that's the largest MTU most interfaces will accept.
+# have any effect. We set it to 9000 because that's the largest MTU most interfaces will accept.
 # Note that the MTU for actual capture is set separately, at compile time, about twice this. We
 # have seen packets far larger than this, and IPv6 can support jumbo frames of up to 2^32 bytes.
-# The reason for this discrepancy is dynamic packet reassembly at the interface can result
+# The reason for this discrepancy that dynamic packet reassembly at the interface can result
 # in huge packets.
-MTU = 9710
+# Note that I've seen interfaces that support an MTU up to 9710.
+MTU = 9000
 
 # Protocols to support directly filtering in the interface. The search system supports
 # every transport protocol, but by default we only allow filtering by TCP or UDP.

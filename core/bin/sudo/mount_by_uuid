@@ -1,4 +1,4 @@
-#!/bin/env python3
+#!/usr/bin/python3
 
 import os
 import shutil
@@ -14,7 +14,7 @@ UDEVADMIN_CMD = '/sbin/udevadm'
 CAPTURE_GROUP = 'capture'
 
 dirname = os.path.dirname
-PCAPDB_PATH = os.path.abspath(dirname(dirname(dirname(dirname(__file__)))))
+PCAPDB_PATH = dirname(dirname(dirname(dirname(os.path.abspath(__file__)))))
 
 
 def usage():
@@ -72,4 +72,4 @@ if subprocess.call(mount_cmd) != 0:
     raise RuntimeError("Could not mount device {}.".format(uuid))
 
 shutil.chown(mount_point, group=CAPTURE_GROUP)
-os.chmod(mount_point, stat.S_IRWXU | stat.S_IRWXG, follow_symlinks=False)
+os.chmod(mount_point, stat.S_IRWXU | stat.S_IRWXG)

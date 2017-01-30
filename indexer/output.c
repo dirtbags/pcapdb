@@ -895,7 +895,8 @@ output_code_t save_stats(
     snprintf(arg_vals[5], UINT64_STR_LEN, "%lu", stats->dropped);
     for (i=0; i < 6; i++) args[i] = arg_vals[i];
     args[6] = index_id;
-    args[7] = stats->interface;
+    // TODO: There's a strange bug that causes this to point to junk. Need to figure it out.
+    args[7] = "ens192"; //stats->interface;
     res = paramExec(cnx, STATS_INS, 8, (char const * const *) args,
                     TUPLES, "Could not insert stats information.");
     if (res == NULL) return OB_DB_ERR;

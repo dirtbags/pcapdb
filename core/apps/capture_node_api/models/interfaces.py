@@ -244,7 +244,6 @@ class Interface(models.Model):
             return
 
         cmd = ['sudo', self._ETHTOOL_PATH, '-L', self.name, 'combined', str(count)]
-        print(cmd)
 
         with tempfile.TemporaryFile() as tmpfile:
             if sp.call(cmd, stdout=tmpfile, stderr=tmpfile) != 0:
@@ -273,7 +272,7 @@ class Interface(models.Model):
 
         # Make sure this interface is up.
         cmd = ['ip', 'link', 'set',
-               'p2p1', 'up',
+               self.name, 'up',
                'promisc', 'on',
                'mtu', str(settings.MTU)]
         with tempfile.TemporaryFile() as tmpfile:
@@ -285,5 +284,6 @@ class Interface(models.Model):
         #TODO: Properly enable the interface for PFRING ZC
 
         self.running_enabled = self.enabled
-        self.queues = self.target_queues
+        if self.queues is not None:
+            self.queues = self.target_queues
         self.save()

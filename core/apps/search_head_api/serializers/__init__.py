@@ -17,12 +17,14 @@ USER_GROUP_NAME_RE = r'^[a-z0-9_-]{4,16}$'
 class GroupSerializer(serializers.ModelSerializer):
     class Meta:
         model = Group
+        fields = '__all__'
 
     name = serializers.RegexField(USER_GROUP_NAME_RE)
 
 class UserExtraSerializer(serializers.ModelSerializer):
     class Meta:
         model = UserExtraModel
+        fields = '__all__'
 
 
 class UserSerializer(serializers.ModelSerializer):
@@ -46,6 +48,7 @@ class UserSerializer(serializers.ModelSerializer):
 class CaptureNodeSerializer(serializers.ModelSerializer):
     class Meta:
         model = CaptureNode
+        fields = '__all__'
 
     site = serializers.SlugRelatedField(slug_field='name', queryset=Site.objects.all())
     addr = serializers.CharField(read_only=True)

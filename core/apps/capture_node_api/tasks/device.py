@@ -1,4 +1,6 @@
 import os
+import time
+
 from celery import shared_task
 from django.conf import settings
 
@@ -202,8 +204,8 @@ def make_index_device(self, disks):
     :return:
     """
 
-    if len(disks) != 2:
-        raise RuntimeError("You must provide two disks")
+    if len(disks) not in [1,2]:
+        raise RuntimeError("You must provide one or two disks")
 
     # Make sure we don't already have an index device.
     status = Status.load()
@@ -221,6 +223,8 @@ def make_index_device(self, disks):
     self.update_state(state="WORKING")
 
     idx_dev = dm.init_index_device(*disks, task=self)
+    while idx_dev.uuid is None:
+        time.sleep(1)
     status.index_uuid = idx_dev.uuid
     status.save()
 

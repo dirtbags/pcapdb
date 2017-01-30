@@ -7,7 +7,8 @@
 
 MKXFS_PATH=/sbin/mkfs.xfs
 
-source libs.sh
+PATH="$( dirname "${BASH_SOURCE[0]}" )"
+source ${PATH}/libs.sh
 
 LABEL=
 if [ $# -eq 2 ] && is_label $2; then
@@ -20,4 +21,7 @@ if check_arg "$1" "$DEVICE_RE"; then
     ${MKXFS_PATH} -f -q ${LABEL} "$1"
     exit $?
 fi
+
+/sbin/udevadm trigger
+
 exit 1

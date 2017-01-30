@@ -6,6 +6,7 @@ from celery import shared_task
 from django.conf import settings
 from django.db import transaction
 from django.utils import timezone
+from django.core.exceptions import ObjectDoesNotExist
 
 from apps.capture_node_api.models.capture import Index, Stats as IdxStats
 from apps.capture_node_api.models.status import Status
@@ -75,7 +76,11 @@ def update_stats(self):
                 oldest = idx.readied
 
             # Get all the stat minutes objects referenced by this object
-            stat_minutes = Stats.from_index(idx, capture_node, interfaces[idx.stats.interface])
+            try:
+                iface = idx.stats.interface
+            except ObjectDoesNotExist:
+                continue
+            stat_minutes = Stats.from_index(idx, capture_node, interfaces[iface])
 
             iface_minutes = interface_minutes[idx.stats.interface]
             for stat in stat_minutes:

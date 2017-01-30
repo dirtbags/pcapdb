@@ -103,16 +103,28 @@ class Disk(models.Model):
         """Attempt to mount this disk if it isn't mounted already.
         Raises RuntimeError's on failure.
         """
+        
         if self.mounted:
             return
 
-        with tempfile.TemporaryFile as err:
-            ret = subprocess.call([MOUNT_UUID_CMD, str(self.uuid)],
-                                  stdout=err, stderr=err)
+        if not os.path.exists(self.mountpoint):
+            os.mkdir(self.mountpoint)
+
+        self.mount_uuid(self.uuid)
+
+    @staticmethod
+    def mount_uuid(uuid, is_index=False):
+        cmd = [settings.SUDO_PATH, MOUNT_UUID_CMD, str(uuid)]
+        if is_index:
+            cmd.append('-i')
+        with tempfile.TemporaryFile() as err:
+            ret = subprocess.call(cmd, stdout=err, stderr=err)
 
             if ret != 0:
                 err.seek(0)
                 log.error(err.read())
+                raise RuntimeError("Error mounting disk {}.".format(uuid))
+        
 
     def umount(self):
         """Attempt to un-mount this capture disk."""
