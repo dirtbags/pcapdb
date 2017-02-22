@@ -46,7 +46,7 @@ failures in certain pip installed packages. Add `PATH=$PATH:<pgsql_bin_path>` to
 # Setup 
 After running 'make install', there are a few more steps to perform. 
 
-'sudo make rabbitmq' will setup rabbitmq for use with pcapdb, create a password for the pcapdb account, and automatically set that password in the the pcapdb config file.
+Running (from your installation directory) 'sudo core/bin/rabbitmq_setup.sh' will setup rabbitmq for use with pcapdb, create a password for the pcapdb account, and automatically set that password in the the pcapdb config file.
 
 ## DESTDIR/etc/pcapdb.cfg 
 This is the main Pcapdb config file. You must set certain values before PcapDB will run at all.
