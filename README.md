@@ -26,7 +26,7 @@ Debian systems, but its primary testbed has so far been Redhat based. While it h
 work (with packages from non-default repositories) on RHEL 6, a more bleeding edge system (like
 RHEL/Centos 7, or the latest Debian/Ubuntu LTS) will greatly simplify the process of gathering dependencies.
 
-[sys_requirements.txt](sys_requirements.txt) contains a list of the packages required to run and build pcapdb.
+[sys_requirements.md](sys_requirements.md) contains a list of the packages required to run and build pcapdb.
 
 requirements.txt contains python/pip requirements. They will be installed via 'make install'.
 
