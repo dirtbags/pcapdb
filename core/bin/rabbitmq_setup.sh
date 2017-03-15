@@ -1,9 +1,9 @@
 #!/bin/bash
 
-# This sets up the rabbitmq server for the pcapdb search head.
-# It typically only needs to be run once.
-# The password will be set in the pcapdb.conf file automatically, but will 
-# need to be distributed to the capture nodes and set in their rabbitmq.conf files manually.
+echo This sets up the rabbitmq server for the pcapdb search head.
+echo It typically only needs to be run once.
+echo The password will be set in the pcapdb.conf file automatically, but will 
+echo need to be distributed to the capture nodes and set in their rabbitmq.conf files manually.
 
 RABBITMQCTL=$(which rabbitmqctl)
 DD=$(which dd)

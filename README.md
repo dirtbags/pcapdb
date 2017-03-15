@@ -19,7 +19,10 @@ accessible by the Capture Nodes, but there's no need for the Capture Nodes to be
 Search Head.
 
 # Requirements 
-PcapDB is designed to work on Linux servers only. It was developed on both Redhat Enterprise and Debian systems, but its primary testbed has so far been Redhat based.
+PcapDB is designed to work on Linux servers only. It was developed on both Redhat Enterprise and
+Debian systems, but its primary testbed has so far been Redhat based. While it has been verified to
+work (with packages from non-default repositories) on RHEL 6, a more bleeding edge system (like
+RHEL/Centos 7, or the latest Debian/Ubuntu LTS) will greatly simplify the process of gathering dependencies.
 
 [sys_requirements.txt](sys_requirements.txt) contains a list of the packages required to run and build pcapdb.
 
@@ -46,7 +49,7 @@ failures in certain pip installed packages. Add `PATH=$PATH:<pgsql_bin_path>` to
 # Setup 
 After running 'make install', there are a few more steps to perform. 
 
-'sudo make rabbitmq' will setup rabbitmq for use with pcapdb, create a password for the pcapdb account, and automatically set that password in the the pcapdb config file.
+Running (from your installation directory) 'sudo core/bin/rabbitmq_setup.sh' will setup rabbitmq for use with pcapdb, create a password for the pcapdb account, and automatically set that password in the the pcapdb config file.
 
 ## DESTDIR/etc/pcapdb.cfg 
 This is the main Pcapdb config file. You must set certain values before PcapDB will run at all.
