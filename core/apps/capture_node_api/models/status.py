@@ -252,7 +252,7 @@ class Status(SingletonModel):
                     self.save()
                     return self.NOT_OK
 
-        capture_cmd = [settings.CAPTURE_CMD]
+        capture_cmd = [settings.SUDO_PATH, settings.CAPTURE_CMD]
 
         if self.capture_mode == self.MODE_LIBPCAP:
             capture_cmd.append('-l')

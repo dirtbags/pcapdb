@@ -139,6 +139,7 @@ ${DESTDIR}/etc/sudoers:
 	echo "capture	ALL=NOPASSWD:/bin/readlink -f /proc/[0-9]*/exe" >> $@
 	echo "capture	ALL=NOPASSWD:/bin/umount"						>> $@
 	echo "capture	ALL=NOPASSWD:/sbin/blkid"						>> $@
+	echo "capture	ALL=NOPASSWD:${DESTDIR}/bin/capture"			>> $@
 
 ${DESTDIR}/etc/supervisord_common.conf: etc/supervisord_common.conf.tmpl
 	sed 's/DESTDIR/${DESTDIR_ESCAPED}/g' etc/supervisord_common.conf.tmpl > $@	

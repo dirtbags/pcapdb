@@ -29,6 +29,13 @@ def main():
     status = Status.load()
     while True:
         # Exits when killed
+        # Only do this check every five seconds.
+        time.sleep(REFRESH_RATE)
+        try:
+            status.refresh_from_db()
+        except status.DoesNotExist:
+            # We've never created a status object. Just sleep until we do.
+            continue
 
         if status.capture == status.RESTART:
             # It doesn't matter if we're running or not, restart/start capture.
@@ -36,7 +43,7 @@ def main():
             status.start_capture()
 
         elif status.capture == status.STOPPED:
-            if status.find_capture_pids():
+            if status.pid is not None:
                 # Capture is still running somewhere.
                 # Shut it down.
                 # Shut it down forever.
@@ -51,10 +58,6 @@ def main():
                 status.start_capture()
         else:
             log.error("Invalid capture mode: {}".format(status.capture))
-
-        # Only do this check every five seconds.
-        time.sleep(REFRESH_RATE)
-        status.refresh_from_db()
 
 if __name__ == '__main__':
     main()

@@ -312,7 +312,8 @@ int main(int argc, char **argv) {
 
     // Test database connection
     // It's better to find out now that we can't connect than when we've already
-    // captured data.
+    // captured data. This needs to happen after we switch to the capture user,
+    // as root probably won't have a DB role.
     PGconn *conf_cnx;
     if (conf->use_db == PCAPDB_USE_DB) {
         conf_cnx = get_db_conn(conf);

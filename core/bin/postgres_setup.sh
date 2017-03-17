@@ -98,7 +98,9 @@ if ! ${SUDO_PG} psql -tAc "select 1 from pg_roles WHERE rolname='${PCAPDB_USER}'
 
 fi
 
-echo "is_search_head ${IS_SEARCH_HEAD} ${PCAPDB_CONFIG}"
+echo "Setting search head ip in ${PCAPDB_CONFIG}"
+sed --in-place "s/^search_head_host *=.*/search_head_host = ${SEARCH_HEAD_IP}/" ${PCAPDB_CONFIG}
+
 
 if [ ${IS_SEARCH_HEAD} -eq 0 ]; then 
     echo "Setting host as a search head in ${PCAPDB_CONFIG}"
@@ -107,7 +109,7 @@ if [ ${IS_SEARCH_HEAD} -eq 0 ]; then
     echo "Creating a random session secret in ${PCAPDB_CONFIG}"
     SESSION_SECRET=$(${DD} if=/dev/urandom count=1 bs=512 2>/dev/null | ${HASHER} - | head -c 32)
     echo "Setting the session secret"
-    sed --in-place "s/^session_secret/session_secret = ${SESSION_SECRET}/" ${PCAPDB_CONFIG}
+    sed --in-place "s/^session_secret.*/session_secret = ${SESSION_SECRET}/" ${PCAPDB_CONFIG}
 
     if ! ${SUDO_PG} psql -tAc "select 1 from pg_database WHERE datname='pcapdb'" | grep -q 1; then
         ${SUDO_PG} createdb -O capture pcapdb
@@ -147,6 +149,23 @@ if [ ${IS_CAPTURE_NODE} -eq 0 ]; then
     if ! ${SUDO_PG} psql -tAc "select 1 from pg_database WHERE datname='capture_node'" | grep -q 1; then
     ${SUDO_PG} createdb -O capture capture_node
     fi
+
+    if ! ${SUDO_PG} psql -tAc "select 1 from pg_roles WHERE rolname='root'" | grep -q 1; then 
+        # Create a 'root' role with the same privileges as the PCAPDB_USER. We just reuse the
+        # password, though it won't ever actually get used.
+        if ${SUDO_PG} psql -tAc  "CREATE ROLE root PASSWORD '${PASSWD_ENC}' LOGIN"; then 
+            echo "'root' db role created"
+        else
+            echo "Failed to create ${PCAPDB_USER} db role"
+            exit 1
+        fi
+        if ${SUDO_PG} psql -tAc  "GRANT ${PCAPDB_USER} TO root"; then 
+            echo "'root' db role given priviledges"
+        else
+            echo "Failed to give root role access to pcapdb databases."
+            exit 1
+        fi
+    fi
 fi
 
 ./bin/python core/manage.py makemigrations $ALL_APPS
@@ -168,5 +187,8 @@ if [ ${IS_CAPTURE_NODE} -eq 0 ]; then
         echo " - Restart everything in supervisorctl"
         echo -e "\033[0m"
     fi
+    supervisord restart capture_runner
 fi
+
+supervisord restart pcapdb_celery
 
