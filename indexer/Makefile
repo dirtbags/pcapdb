@@ -1,11 +1,11 @@
 DESTDIR=/var/pcapdb
 
-build:
+build/Makefile:
 	mkdir -p build
 	cd build; cmake -DCMAKE_INSTALL_PREFIX="" ../
 	make -C build
 
-install: install_scripts build
+install: install_scripts build/Makefile
 	make -C build install 
 
 install_scripts:

@@ -1,9 +1,11 @@
 [pcapdb]
-# A host can be both an capture_node and a search head, but there can only be one search head.
+# Required
+# Each node must be either a capture_node and a search head, but there can only be one search head.
 capture_node = False
 search_head = False
 
-# The host on which the search head is located. This is required.
+# Required, even for the search head.
+# The FQDN of the host on which the search head is located. 
 search_head_host=
 
 # Required
@@ -12,6 +14,7 @@ db_user = capture
 db_pass = 
 
 # Required for the search head
+# Should be a long, random string or passphrase. It's basically the salt for session keys in the interface.
 session_secret = 
 
 # Defaults to 'pcapdb'
@@ -22,9 +25,10 @@ session_secret =
 # Used only for testing, defaults to 443
 # http_port = 8111
 
-# The title for the splash section.
+# The title for the splash page.
 splash_title=Warning
-splash_text=Insert your variation of a splash page text here. (ie: This is a government system, etc.) This text is not escaped, so it can contain HTML elements.
+# Text for the splash page
+splash_text=Insert your variation of a splash page text here. (ie: This is a government system, etc.) This text is not escaped, so it can contain HTML elements. The config file format restricts it to a single line.
 
 [smtp]
 # Configuration for the local smtp server to use to send email to users.

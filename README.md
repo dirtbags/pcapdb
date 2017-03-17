@@ -51,10 +51,10 @@ failures in certain pip installed packages. Add `PATH=$PATH:<pgsql_bin_path>` to
 # Setup 
 After running 'make install', there are a few more steps to perform. 
 
-Running (from your installation directory) 'sudo core/bin/rabbitmq_setup.sh' will setup rabbitmq for use with pcapdb, create a password for the pcapdb account, and automatically set that password in the the pcapdb config file.
+Running from DESTDIR (your installation directory) `sudo core/bin/rabbitmq_setup.sh` will setup rabbitmq for use with pcapdb, create a password for the pcapdb account, and automatically set that password in the the pcapdb config file.
 
 ## DESTDIR/etc/pcapdb.cfg 
-This is the main Pcapdb config file. You must set certain values before PcapDB will run at all.
+This is the main Pcapdb config file. You must set certain values before PcapDB will run at all. Those settings are noted in the file. 
 
 ## RabbitMQ 
 RabbitMQ is a fast and efficient messaging system used to communicate simple messages between a
@@ -65,7 +65,7 @@ as well as a queue for the Search Head. The command 'rabbitmqctl' gives visibili
 currently active queues. For further debugging/introspection, the rabbitmq admin plugin provides a
 web interface that can be quite useful.
 
-RabbitMQ need only be configured on the search head. We've provided a script that does most of the
+RabbitMQ server need only be configured on the search head. We've provided a script that does most of the
 work:
 ```
 $ /var/pcapdb/core/bin/rabbitmq_setup.sh
@@ -79,15 +79,20 @@ head, but will need to be added to the pcapdb.cfg file for each Capture Node man
 The setup varies significantly between the search head and capture nodes. 
 
 ### Add the 'capture' Role 
-On all pcapdb servers, add a 'capture' role with login privileges and a password:
-'createuser capture -l -P'
+On all pcapdb servers, add a 'capture' role with login privileges and a password. As the postgres user:
+```
+sudo su -postgres
+createuser capture -l -P
+```
 
 The 'db\_pass' variable in the pcapdb.cfg file should be set to the Search Head's db password on all
 pcapdb hosts in the network. 
 
 ### On the Search Head 
 Create a database named "pcapdb":
-'createdb -O capture pcapdb'
+```
+createdb -O capture pcapdb
+```
 
 Edit the Search Head's "pg\_hba.conf" (location varies) file to allow connections to Search Head DB from localhost. Also add a line allowing each capture node. 
 ```
@@ -109,6 +114,13 @@ createdb -O capture capture_node
 Since the capture nodes connect via peer (unix socket) to their own database, no additional setup
 should be needed.
 
+
+### Restart the postgresql server.
+```
+# On most systems...
+service postgresql restart
+```
+
 ### Install the Database Tables 
 After restarting the postgres service, we'll need to install the database tables on each 
 PcapDB host. From the PcapDB installation directory (typically /var/pcapdb):
@@ -117,7 +129,12 @@ sudo su - root
 cd /var/pcapdb
 ./bin/python core/manage.py makemigrations stats_api login_api core task_api search_head_api
 login_gui search_head_gui capture_node_api
+
+# On the search head
 ./bin/python core/manage.py migrate
+
+# On the capture nodes
+./bin/python core/manage.py migrate --database=capture_node
 ```
 
 ## Web server setup 
@@ -128,15 +145,17 @@ self-signed.
 ## Firewall Notes 
  - The Capture Nodes don't open any incoming ports for PcapDB, all communication is out to the Search Head.
  - Using IPtables or other system firewalls on the Capture Nodes is discouraged. Instead
-   put them on a normally inaccessible network.
+   put them on a normally inaccessible network. They shouldn't generally have any ports open other than ssh.
  - The Search Head needs to be accessible by the Capture Nodes on ports 443, 5432 (postgres), and
    25672 (rabbitmq). 
    - It's ok to us IP tables on the Search Head (and will eventually be automatic)
 
 # Running the system 
 If you installed anywhere except 'in place', the system should attempt to run itself via
-supervisord.
+supervisord. __You'll have to restart some processes, as supervisord will have given up on them.__
  - The `supervisorctl` command can give you the status of the various components of the system. Capture has to be started manually from within the interface, so you shouldn't expect it to be running initially.
+ - The `capture_runner` process, however, should be running. From within supervisorctl, 
+
  - The `core/runserver` and `core/runcelery` scripts will be helpful when not running the system in
    production.
  - Similarly, to run capture outside of production, use the capture_runner.py script: 

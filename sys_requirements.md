@@ -8,9 +8,16 @@ __The version numbers listed are the versions that the system was tested on.__
 
 ## On Debian/Ubuntu
 On all nodes:
-`apt install -y postgresql postgresql-server-dev-all tshark python3 python3-pip python3-dev python3-virtualenv uwsgi-plugin-python libsasl2-dev libldap2-dev supervisor librabbitmq ethtool`
+ - `apt install -y postgresql postgresql-server-dev-all tshark python3 python3-pip python3-dev virtualenv uwsgi-plugin-python libsasl2-dev libldap2-dev supervisor dkms`
+
 On the search head:
-`apt install -y rabbitmq-server nginx`
+ - `apt install -y rabbitmq-server nginx`
+
+On the capture nodes:
+ - `apt install -y librabbitmq4 ethtool`
+
+If you're building from source:
+ - `apt install -y cmake libnuma-dev libssl-dev libhugetlbfs-dev libpcap-dev`
 
 # Detailed General Requirements
 ## PostGres
@@ -80,6 +87,8 @@ We need to talk to the rabbitmq server, and probe network interfaces.
 ## PFRING
 For pfring, ntop.org provides RPM's and DEB's at http://packages.ntop.org/
  - pfring  >= 6.2
+ - pfring-dkms (also provided via ntop)
+ - dkms (available via apt)
 
 # Build Requirements
 These are only required when building from source.

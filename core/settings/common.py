@@ -247,24 +247,26 @@ WSGI_APPLICATION = 'settings.wsgi.application'
 
 # Database
 # https://docs.djangoproject.com/en/1.8/ref/settings/#databases
-
-DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.postgresql_psycopg2',
-        'HOST': SEARCH_HEAD_HOST,
-        'NAME': config.get('pcapdb', 'db_name', fallback='pcapdb'),
-        'USER': config.get('pcapdb', 'db_user'),
-        'PASSWORD': config.get('pcapdb', 'db_pass')
+DATABASES = {'default': {
+    'ENGINE': 'django.db.backends.postgresql_psycopg2',
+    'NAME': config.get('pcapdb', 'db_name', fallback='pcapdb'),
+     # Use peer authentication except on capture nodes.
+    'USER': config.get('pcapdb', 'db_user'),
+    'PASSWORD': config.get('pcapdb', 'db_pass')
     }
 }
 
+if not IS_SEARCH_HEAD:
+    DATABASES['default']['HOST'] = SEARCH_HEAD_HOST
+
 if IS_CAPTURE_NODE:
-    DATABASES['capture_node'] = {'ENGINE': 'django.db.backends.postgresql_psycopg2',
-                                 'HOST': 'localhost',
-                                 'NAME': config.get('pcapdb', 'capnode_db_name',
-                                                    fallback='capture_node'),
-                                 'USER': config.get('pcapdb', 'db_user'),
-                                 'PASSWORD': config.get('pcapdb', 'db_pass')}
+    # Use peer authentication
+    DATABASES['capture_node'] = {
+        'ENGINE': 'django.db.backends.postgresql_psycopg2',
+        'NAME': config.get('pcapdb', 'capnode_db_name', fallback='capture_node'),
+        'USER': CAPTURE_USER 
+        }
+
 DATABASE_ROUTERS = ['apps.core.routers.BaseRouter',
                     'apps.capture_node_api.CaptureNodeRouter']
 

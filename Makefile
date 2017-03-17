@@ -1,15 +1,14 @@
 # Running pip below without pointing to the postgres bin path will fail.
-PGSQL_BINPATH="$(shell dirname $$(locate -r 'pg_config$$' | sort | tail -1))"
+PGSQL_BINPATH:="$(shell dirname $$(locate -r 'pg_config$$' | sort | tail -1))"
 PATH_EXPORT=export PATH=$$PATH:${PGSQL_BINPATH}:/usr/local/bin;
 
 PYTHON3_PATH=$(shell which python3)
 
 # The proxy info for you site
 PROXY=
-HTTP_PROXY=
+PROXY_EXPORT=
 ifneq "${PROXY}" ""
-	export http_proxy="http://${PROXY}"
-	export https_proxy="http://${PROXY}"
+	PROXY_EXPORT=export http_proxy="http://${PROXY}"; export https_proxy="http://${PROXY}";
 endif
 
 DESTDIR=/var/pcapdb
@@ -38,16 +37,17 @@ else
 endif
 
 # Build and install the capture system.
-install-common: setup_dirs ${DESTDIR}/bin/python ${DESTDIR}/lib/packages_installed indexer_install core
+install-common: setup_dirs ${DESTDIR}/bin/.virtual_env ${DESTDIR}/lib/packages_installed indexer_install core
 
 install-capture-node: install-common capture-node-configs common-configs
 install-search-head: install-common search-head-configs common-configs
 install-monolithic: install-common capture-node-configs search-head-configs common-configs
 
 # Create the python ${DESTDIR}/bin/python that will run all our python code
-${DESTDIR}/bin/python:
+${DESTDIR}/bin/.virtual_env:
 	updatedb
-	${PATH_EXPORT} env virtualenv -p ${PYTHON3_PATH} ${DESTDIR}
+	${PROXY_EXPORT} ${PATH_EXPORT} env virtualenv -p ${PYTHON3_PATH} ${DESTDIR}
+	touch $@
 
 SYSTEM_DIRS=${DESTDIR}/capture ${DESTDIR}/capture/index ${DESTDIR}/log ${DESTDIR}/static ${DESTDIR}/etc ${DESTDIR}/media
 
@@ -63,9 +63,12 @@ endif
 	# The log directory needs to have any files created in it have the CAPTURE_USER as the owner.
 	# (That's what SETUID does for directories)
 	chmod u+s ${DESTDIR}/log
+	# The setuid bit for directories is disabled for some systems, apparently. 
+	# We'll redundantly do the same thing with extended ACL's
+	setfacl --set default:u:${CAPTURE_USER}:rw ${DESTDIR}/log
 	# If we have a syslog user, then set the log directory to that as the group, and make
 	# the directory group writable.
-	if id ${SYSLOG_USER}; then chgrp ${SYSLOG_USER} ${DESTDIR}/log; chown g+w ${DESTDIR}; fi
+	if id ${SYSLOG_USER}; then chgrp ${SYSLOG_USER} ${DESTDIR}/log; chmod g+w ${DESTDIR}; fi
 
 core: setup_dirs 
 ifneq "${DESTDIR}" "$(shell pwd)"
@@ -160,8 +163,8 @@ setup_user:
 	if ! id ${CAPTURE_USER} > /dev/null; then useradd -d ${DESTDIR} -c "PcapDB User" -g ${CAPTURE_GROUP} -M -r ${CAPTURE_USER}; fi
 endif 
 
-${DESTDIR}/lib/packages_installed: ${DESTDIR}/bin/python requirements.txt
-	http_proxy=${http_proxy} export https_proxy=${http_proxy} ${PATH_EXPORT} ${DESTDIR}/bin/pip install -r requirements.txt 
+${DESTDIR}/lib/packages_installed: ${DESTDIR}/bin/.virtual_env requirements.txt
+	${PROXY_EXPORT} ${PATH_EXPORT} ${DESTDIR}/bin/pip install -r requirements.txt 
 	echo "Warning: if you have multiple postgres versions installed and/or psycopg2 fails to work,"
 	echo "then it's possibly because the wrong postgres bin path was used."
 	echo "Use pip to uninstall psycopg2, and reinstall with the correct path."
