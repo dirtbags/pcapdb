@@ -9,9 +9,12 @@ import tempfile
 
 from django.conf import settings
 
-from celery.utils import log as logging
+#from celery.utils import log as logging
 
-log = logging.task_logger
+import logging
+log = logging.getLogger(__name__)
+
+#log = logging.task_logger
 
 __author__ = 'pflarr'
 
@@ -520,7 +523,7 @@ class LVMDevice(Device):
 
 class DiskDevice(Device):
     type = Device.DISK_TYPE
-    COMPAT_RE = re.compile(r'sd[a-z]+\d*$')
+    COMPAT_RE = re.compile(r'(?:sd|xvd)[a-z]+\d*$')
 
     def __init__(self, dev):
         Device.__init__(self, dev)
@@ -995,7 +998,7 @@ def init_index_device(*devices, task=None):
     # Create a RAID 1, but with only one workind disk.
     mdadm_cmd = [settings.SUDO_PATH, CREATE_INDEX_CMD, '/dev/md{0:d}'.format(md_num),
                  dev_obs[0].dev_path]
-    print(mdadm_cmd)
+    log.info('create index raid command:{}'.format(mdadm_cmd))
 
     proc = subprocess.Popen(mdadm_cmd, stdout=subprocess.PIPE,
                            stderr=subprocess.PIPE, stdin=subprocess.PIPE)

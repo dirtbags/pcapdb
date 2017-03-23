@@ -9,6 +9,9 @@ from apps.capture_node_api.models import Disk
 from apps.capture_node_api.models.status import Status
 from apps.capture_node_api.serializers import DiskSerializer
 
+import logging
+log = logging.getLogger(__name__)
+
 __author__ = 'pflarr'
 
 IF_SYS_PATH = '/sys/class/net/'
@@ -33,6 +36,7 @@ def list(self):
     dev_status = Status.load()
 
     host_devices = dm.Device.get_devices().values()
+    log.info('host_devices: {}'.format(host_devices))
 
     known_uuids = [disk.uuid for disk in Disk.objects.all()]
 

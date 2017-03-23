@@ -54,9 +54,9 @@ class SearchInfo(models.Model):
     @staticmethod
     def _url(path):
         if os.environ.get('HTTPS', 'off') == 'on':
-            url = 'https://{}'.format(socket.getfqdn())
+            url = 'https://{}'.format(settings.UI_HOST)
         else:
-            url = 'http://{}'.format(socket.getfqdn())
+            url = 'http://{}'.format(settings.UI_HOST)
 
         if hasattr(settings, 'HTTP_PORT') and settings.HTTP_PORT is not None:
             url += ':{}'.format(settings.HTTP_PORT)
@@ -135,5 +135,5 @@ class NodeSearch(models.Model):
 
     def post_url(self):
         return 'https://{}{}'.format(
-            socket.getfqdn(),
+            settings.UI_HOST,
             reverse('search_head_api:node-search-result', args=[str(self.token)]))

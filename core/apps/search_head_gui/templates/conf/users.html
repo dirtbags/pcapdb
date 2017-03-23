@@ -53,18 +53,6 @@
             </select>
           </div>
           <div class="form-group">
-            <label for="user-timezone">Timezone</label>
-            <select id="user-timezone" name="timezone">
-              {% for tz, tz_short in timezones %}
-                {% if tz == default_tz %}
-                  <option value="{{ tz }}" selected title="{{ tz }}">{{ tz_short }}</option>
-                {% else %}
-                  <option value="{{ tz }}" title="{{ tz }}">{{ tz_short }}</option>
-                {% endif %}
-              {% endfor %}
-            </select>
-          </div>
-          <div class="form-group">
             <button type="submit" class="btn btn-default">Add User</button>
           </div>
         </form>
@@ -170,10 +158,6 @@
           {
             data: 'email',
             title: 'Email'
-          },
-          {
-            data: 'extra.timezone_name',
-            title: 'TimeZone'
           },
           {
             data: 'groups',

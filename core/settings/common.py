@@ -53,6 +53,8 @@ IS_CAPTURE_NODE = config.getboolean('pcapdb', 'capture_node', fallback=False)
 # The node name for this instance is just the host's fqdn.
 NODE_NAME = socket.getfqdn()
 
+UI_HOST = config.get('pcapdb', 'search_head_ui_host', fallback=NODE_NAME)
+
 # If this is the search head, we don't need to be told who the search head is explicitely.
 if IS_SEARCH_HEAD and not config.has_option('pcapdb', 'search_head_host'):
     config.set('pcapdb', 'search_head_host', NODE_NAME)

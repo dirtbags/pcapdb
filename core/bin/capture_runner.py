@@ -31,6 +31,7 @@ def main():
         # Exits when killed
         # Only do this check every five seconds.
         time.sleep(REFRESH_RATE)
+        
         try:
             status.refresh_from_db()
         except status.DoesNotExist:
@@ -54,7 +55,7 @@ def main():
             cap_status = status.capture_status
             if cap_status[0] == status.NOT_OK:
                 # Capture should be started, but isn't
-                log.info("Capture was supposed to be running, but wasn't.")
+                log.info("Capture was supposed to be running, but wasn't: {}".format(cap_status[1]))
                 status.start_capture()
         else:
             log.error("Invalid capture mode: {}".format(status.capture))

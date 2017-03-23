@@ -51,11 +51,11 @@ def splayed_task(self, message):
 
     with open(result.file.path, 'w') as result_file:
         f = File(result_file)
-        f.write('{} got message: {}'.format(socket.getfqdn(), message))
+        f.write('{} got message: {}'.format(settings.UI_HOST, message))
         f.close()
     result.save()
 
     path = reverse('capture_node:result', kwargs={'file_id': result.id})
-    file_url = 'http://{}:{}{}'.format(socket.getfqdn(), settings.HTTP_PORT, path)
+    file_url = 'http://{}:{}{}'.format(settings.UI_HOST, settings.HTTP_PORT, path)
 
     return {'link': file_url, 'msg': 'ok'}

@@ -26,7 +26,7 @@ class ResultFile(models.Model):
     def uri(self):
         """Return an absolute uri to this file."""
         path = reverse('capture_node:result', kwargs={'file_id': self.id})
-        file_url = 'http://{}:{}{}'.format(socket.getfqdn(), settings.HTTP_PORT, path)
+        file_url = 'http://{}:{}{}'.format(settings.UI_HOST, settings.HTTP_PORT, path)
 
         return file_url
 

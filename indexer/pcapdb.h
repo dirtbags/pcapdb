@@ -184,12 +184,12 @@ struct config {
 // These macros define how to calculate how many of each type of thread to
 // create, based on the number of CPUs on a system.
 // We pretty much consume all of the available CPUs.
-#define CAPTURE_THREAD_LIMIT(cpus) cpus/4;
+#define CAPTURE_THREAD_LIMIT(cpus) cpus/4+1;
 // We want more index and output threads than input threads.
 // Maybe some day this will be dynamic based on the number of items
 // in the bucket queues.
-#define INDEX_THREAD_LIMIT(cpus) cpus*3/8;
-#define OUTPUT_THREAD_LIMIT(cpus) cpus*3/8;
+#define INDEX_THREAD_LIMIT(cpus) 1 + cpus*3/8;
+#define OUTPUT_THREAD_LIMIT(cpus) 1 + cpus*3/8;
 
 // Allowed characters in interface names.
 // Interface names are passed to shell calls as root, so

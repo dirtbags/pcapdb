@@ -127,12 +127,15 @@ class Status(SingletonModel):
             proc = subprocess.Popen(readlink, stdin=subprocess.DEVNULL,
                                     stdout=subprocess.PIPE, stderr=subprocess.PIPE)
             outs, err = proc.communicate(input="")
+            if proc.poll() != 0:
+                log.error("Could not check process link path: {}".format(readlink))
             outs = outs.decode('utf8').strip()
             if outs != settings.CAPTURE_CMD:
                 if outs.endswith("(deleted)") and outs.split()[0] == settings.CAPTURE_CMD:
                     return self.RESTART, "The capture program has been updated. Restart needed."
                 else:
-                    return self.NOT_OK, "Capture isn't running.."
+                    return self.NOT_OK, "Capture isn't running. ({} != {})".format(outs, 
+                            settings.CAPTURE_CMD)
 
         # If the number of queues or the the enabled status doesn't match up with
         # what is currently being used, return NEEDS_RESTART
@@ -252,7 +255,7 @@ class Status(SingletonModel):
                     self.save()
                     return self.NOT_OK
 
-        capture_cmd = [settings.SUDO_PATH, settings.CAPTURE_CMD]
+        capture_cmd = [settings.CAPTURE_CMD]
 
         if self.capture_mode == self.MODE_LIBPCAP:
             capture_cmd.append('-l')

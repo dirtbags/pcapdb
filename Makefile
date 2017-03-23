@@ -83,9 +83,12 @@ endif
 
 SUPERVISORD_CONF=$(shell find /etc -name supervisord.conf)
 common-configs: ${DESTDIR}/etc/syslog.conf ${DESTDIR}/etc/logrotate.conf ${DESTDIR}/etc/sudoers ${DESTDIR}/etc/supervisord_common.conf
-	if [ ! -e ${RSYSLOGD} ]; then ln -s ${DESTDIR}/etc/syslog.conf ${RSYSLOGD}/pcapdb.conf; fi
-	service rsyslog restart
-	if [ ! -e ${LOGROTATED} ]; then ln -s ${DESTDIR}/etc/logrotate.conf ${LOGROTATED}/pcapdb; fi
+	if [ ! -e ${RSYSLOGD}/pcapdb.conf ]; then \
+        echo "Installing rsyslog configuration."\
+        ln -s ${DESTDIR}/etc/syslog.conf ${RSYSLOGD}/pcapdb.conf; \
+	    service rsyslog restart;\
+    fi
+	if [ ! -e ${LOGROTATED}/pcapdb ]; then ln -s ${DESTDIR}/etc/logrotate.conf ${LOGROTATED}/pcapdb; fi
 	install -g root -o root -m 0440 ${DESTDIR}/etc/sudoers /etc/sudoers.d/pcapdb
 	# Tell supervisord to include our supervisord conf
 	if ! grep -E "^files = ${DESTDIR}/etc/supervisord\*.conf" ${SUPERVISORD_CONF}; then \

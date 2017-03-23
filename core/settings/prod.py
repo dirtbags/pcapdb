@@ -21,8 +21,6 @@ CSRF_COOKIE_SECURE = True
 
 DEBUG = False
 
-ALLOWED_HOSTS = [socket.getfqdn()]
-
 CAPTURE_USER = 'capture'
 CAPTURE_GROUP = 'capture'
 

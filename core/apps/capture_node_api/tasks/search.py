@@ -55,7 +55,7 @@ def search_node(self, search_txt, start, end, proto, result_url, packets=False):
                                    ready=True).order_by('id')
 
     if not indexes:
-        return {'msg': 'No data to search in time-span ({}).'.format(socket.getfqdn())}
+        return {'msg': 'No data to search in time-span ({}).'.format(settings.UI_HOST)}
 
     # Create our search description and save it to a temp file.
     search_descr = tempfile.NamedTemporaryFile('w', delete=False)
@@ -207,12 +207,12 @@ def splayed_task(self, message):
 
     with open(result.file.path, 'w') as result_file:
         f = File(result_file)
-        f.write('{} got message: {}'.format(socket.getfqdn(), message))
+        f.write('{} got message: {}'.format(settings.UI_HOST, message))
         f.close()
     result.save()
 
     # TODO: This is going to be replaced entirely.
     path = reverse('capture_node:result', kwargs={'file_id': result.id})
-    file_url = 'http://{}:{}{}'.format(socket.getfqdn(), settings.HTTP_PORT, path)
+    file_url = 'http://{}:{}{}'.format(settings.UI_HOST, settings.HTTP_PORT, path)
 
     return {'link': file_url, 'msg': 'ok'}

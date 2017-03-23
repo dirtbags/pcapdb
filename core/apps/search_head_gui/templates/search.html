@@ -260,6 +260,7 @@
     };
     function date_render(cell, cellData, rowData, row, col) {
         var date = Date(cellData);
+        console.log(cellData);
 
         var time = moment(date).format('h:mm:ss.SSSS a');
         $(cell).html(time);
