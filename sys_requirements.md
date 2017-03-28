@@ -79,7 +79,7 @@ __On search head node only__
 ## nginx
 We use nginx to server the interface.
 
-# Indexer only requirements
+# Capture Node only requirements
 We need to talk to the rabbitmq server, and probe network interfaces.
  - librabbitmq
  - ethtool

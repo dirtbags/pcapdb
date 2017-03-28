@@ -20,17 +20,18 @@ also be a Capture Node, or it can be a VM somewhere else. Wherever it is, the Se
 accessible by the Capture Nodes, but there's no need for the Capture Nodes to be visible to the 
 Search Head.
 
-# Requirements 
+# 1. Requirements 
 PcapDB is designed to work on Linux servers only. It was developed on both Redhat Enterprise and
 Debian systems, but its primary testbed has so far been Redhat based. While it has been verified to
 work (with packages from non-default repositories) on RHEL 6, a more bleeding edge system (like
 RHEL/Centos 7, or the latest Debian/Ubuntu LTS) will greatly simplify the process of gathering dependencies.
 
-[sys_requirements.md](sys_requirements.md) contains a list of the packages required to run and build pcapdb.
+[sys_requirements.md](sys_requirements.md) contains a list of the packages required to run and build
+pcapdb. They are easiest to install on modern Debian based machines.
 
-requirements.txt contains python/pip requirements. They will be installed via 'make install'.
+requirements.txt contains python/pip requirements. They will automatically be installed via 'make install'.
 
-# Installing 
+# 2. Installing 
 To build and install everything in /var/pcapdb/, run one of:
 ```
 make install-search-head
@@ -48,13 +49,52 @@ Postgresql may install in a strange location, as noted in the 'indexer/README'. 
 failures in certain pip installed packages. Add `PATH=$PATH:<pgsql_bin_path>` to the end of your
 'make install' command to fix this. For me, it is: `make install PATH=$PATH:/usr/pgsql-9.4/bin`.
 
-# Setup 
+# 3. Setup 
 After running 'make install', there are a few more steps to perform. 
 
-Running from DESTDIR (your installation directory) `sudo core/bin/rabbitmq_setup.sh` will setup rabbitmq for use with pcapdb, create a password for the pcapdb account, and automatically set that password in the the pcapdb config file.
+## 3-1: Post-Install script
+The core/bin/post-install.sh script will handle the vast majority of the system setup for you.
+ - It does so idempotently, so it can be run multiple times without breaking anything.
+ - Run without arguments to get the usage information.
+  - Basically, you want to give it arguments based on whether you're setting up a search head (-s), 
+    a capture node (-c), or monolithic install (-c -s). 
+  - You'll also have to give it the search head's IP.
+```
+/var/pcapdb/core/bin/post-install.sh [-c] [-s] <search_head_ip>    
+```
 
-## DESTDIR/etc/pcapdb.cfg 
-This is the main Pcapdb config file. You must set certain values before PcapDB will run at all. Those settings are noted in the file. 
+This will set up the databases and rabbitmq.
+
+
+## 3-2 DESTDIR/etc/pcapdb.cfg 
+This is the main Pcapdb config file. You must set certain values before PcapDB will run at all.
+There are a few things you need to set in here manually:
+ - (On capture nodes) The search head db password
+ - (On capture nodes) The rabbitmq password
+    - Both of the above should be in the search head's pcapdb.cfg file.
+ - (On search head) The local mailserver. 
+  - If you don't have one, I'd start with installing Postfix. It even has selectable install
+    settings that will configure it as a local mailserver for you.
+
+## 3-3 Add an admin user (Search Head Only)
+You'll need to create an admin user.
+ - This will email you a link to use to set that user's password.
+  - (This is why email had to be set up).
+  - root@localhost is a reasonable email address, if you need it.
+
+## 3-4 That should be it. 
+You should be able to get to the login screen on the https port of the search head. 
+
+## 3-5 pfring-zc drivers
+One more thing. You should install the drivers specific to your capture card for pfring-zc. The
+packages from NTOP actually build the drivers for your kernel on the fly when installed, though
+you may have to reinstall that package whenever you do a kernel update.  Building and installing
+from source is also fairly straightforward.
+
+# Details on the various subsystems
+PcapDB uses quite a few off-the-shelf open source systems, and it's useful to understand how those
+pieces fit into the larger system. What follows is a detailed description of those systems, and how
+to set them up manually. 
 
 ## RabbitMQ 
 RabbitMQ is a fast and efficient messaging system used to communicate simple messages between a
@@ -65,15 +105,15 @@ as well as a queue for the Search Head. The command 'rabbitmqctl' gives visibili
 currently active queues. For further debugging/introspection, the rabbitmq admin plugin provides a
 web interface that can be quite useful.
 
-RabbitMQ server need only be configured on the search head. We've provided a script that does most of the
-work:
+RabbitMQ server need only be configured on the search head.
 ```
-$ /var/pcapdb/core/bin/rabbitmq_setup.sh
+# Get rid of the guest user
+rabbitmqctl delete_user guest
+# Create the pcapdb user with a password
+rabbitmqctl add_user pcapdb <a strong password>
+# Allow the pcapdb user to set/view all queues
+rabbitmqctl set_permissions -p / pcapdb '.*' '.*' '.*'
 ```
-
-The above script will setup rabbitmq and a global user used by the search head and all capture
-nodes. The login information is automatically populated in /var/pcapdb/etc/pcapdb.cfg on the search
-head, but will need to be added to the pcapdb.cfg file for each Capture Node manually.
 
 ## Database Setup 
 The setup varies significantly between the search head and capture nodes. 
@@ -150,7 +190,7 @@ self-signed.
    25672 (rabbitmq). 
    - It's ok to us IP tables on the Search Head (and will eventually be automatic)
 
-# Running the system 
+## Running the system 
 If you installed anywhere except 'in place', the system should attempt to run itself via
 supervisord. __You'll have to restart some processes, as supervisord will have given up on them.__
  - The `supervisorctl` command can give you the status of the various components of the system. Capture has to be started manually from within the interface, so you shouldn't expect it to be running initially.
@@ -163,11 +203,6 @@ supervisord. __You'll have to restart some processes, as supervisord will have g
    - DESTDIR/log/django.log will tell you the exact command used to start capture, if for some reason it's failing to start.
    - DESTDIR/log/capture.log will usually give you some idea why capture is failing to run. If this file doesn't exist, either capture has never successfully ran at all, or rsyslog isn't forwarding the logs to the right place.
 
-## System Component Hierarchy 
-The PcapDB Search Head install consists of a PostgreSQL server, a Celery task queueing system, a
-RabbitMQ messaging system, a uWSGI service, an NGINX webserver, and SupervisorD process management
-system. The Capture Nodes are simpler, running only Celery, PostgreSQL SupervisorD, and the PcapDB
-capture process. 
 
 ### PostgreSQL 
 While PcapDB is a database of packets, it uses postgres to take care of more mundane database tasks.
