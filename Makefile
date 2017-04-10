@@ -97,7 +97,12 @@ common-configs: ${DESTDIR}/etc/syslog.conf ${DESTDIR}/etc/logrotate.conf ${DESTD
 		echo "[include]"                                >> ${SUPERVISORD_CONF}; \
 		echo "files = ${DESTDIR}/etc/supervisord*.conf"	>> ${SUPERVISORD_CONF}; \
 	fi
-	service supervisor restart
+	if service supervisor; then \
+        service supervisor restart; \
+    else \
+        service supervisord restart; \
+    fi
+
 
 search-head-configs: ${DESTDIR}/etc/nginx.conf ${DESTDIR}/etc/supervisord_sh.conf ${DESTDIR}/etc/uwsgi.ini
 	if [ ! -e /etc/ssl/${HOSTNAME}.pem ]; then \
