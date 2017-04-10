@@ -261,12 +261,15 @@ class Index(models.Model):
 
         idx_path = self.path
         total = 0
-        for file in os.listdir(idx_path):
-            file_path = os.path.join(idx_path, file)
-            if os.path.isfile(file_path) and not os.path.islink(file_path):
-                # We don't want to include symlinks
-                # (or directories, though there should never be any).
-                total += os.path.getsize(file_path)
+        try:
+            for file in os.listdir(idx_path):
+                file_path = os.path.join(idx_path, file)
+                if os.path.isfile(file_path) and not os.path.islink(file_path):
+                    # We don't want to include symlinks
+                    # (or directories, though there should never be any).
+                    total += os.path.getsize(file_path)
+        except FileNotFoundError:
+            return 0
 
         return total
 

@@ -36,12 +36,14 @@ else
   INSTALL_PERMS=--owner=${CAPTURE_USER} --group=${CAPTURE_GROUP} 
 endif
 
-# Build and install the capture system.
-install-common: setup_dirs ${DESTDIR}/bin/.virtual_env ${DESTDIR}/lib/packages_installed indexer_install core
-
+install-monolithic: install-common capture-node-configs search-head-configs common-configs
 install-capture-node: install-common capture-node-configs common-configs
 install-search-head: install-common search-head-configs common-configs
-install-monolithic: install-common capture-node-configs search-head-configs common-configs
+
+env: setup_dirs ${DESTDIR}/bin/.virtual_env ${DESTDIR}/lib/packages_installed 
+
+# Build and install the capture system.
+install-common: setup_dirs ${DESTDIR}/bin/.virtual_env ${DESTDIR}/lib/packages_installed indexer_install core
 
 # Create the python ${DESTDIR}/bin/python that will run all our python code
 ${DESTDIR}/bin/.virtual_env:
