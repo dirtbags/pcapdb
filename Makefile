@@ -47,7 +47,7 @@ install-common: setup_dirs ${DESTDIR}/bin/.virtual_env ${DESTDIR}/lib/packages_i
 
 # Create the python ${DESTDIR}/bin/python that will run all our python code
 ${DESTDIR}/bin/.virtual_env:
-	updatedb
+	updatedb --prunepaths=${DESTDIR}
 	${PROXY_EXPORT} ${PATH_EXPORT} env virtualenv -p ${PYTHON3_PATH} ${DESTDIR}
 	touch $@
 

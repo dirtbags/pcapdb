@@ -21,6 +21,7 @@ https://docs.djangoproject.com/en/1.8/ref/settings/
 # Build paths inside the project like this: os.path.join(BASE_DIR, ...)
 from configparser import ConfigParser
 import datetime
+from distutils.spawn import find_executable
 from path import Path
 import pytz
 import socket
@@ -87,9 +88,10 @@ if not (IS_CAPTURE_NODE or IS_SEARCH_HEAD):
     raise RuntimeError("Must set each node to be a search head, capture node, or both.")
 
 # Paths to commonly used executables
-SUDO_PATH = '/usr/bin/sudo'
+SUDO_PATH = find_executable('sudo')
 CAPTURE_CMD = SITE_ROOT/'bin'/'capture'
-MERGECAP_PATH = '/usr/bin/mergecap'
+
+MERGECAP_PATH = find_executable('mergecap')
 
 SPLASH_TITLE = config.get('pcapdb', 'splash_title', fallback='System Usage Warning')
 SPLASH_TEXT = config.get('pcapdb', 'splash_text',
