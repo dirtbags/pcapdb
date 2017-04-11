@@ -73,10 +73,10 @@ This is the main Pcapdb config file. You must set certain values before PcapDB w
 There are a few things you need to set in here manually:
  - __(On capture nodes) The search head db password__
  - __(On capture nodes) The rabbitmq password__
-    - Both of the above should be in the search head's pcapdb.cfg file.
+   - Both of the above should be in the search head's pcapdb.cfg file.
  - __(On search head) The local mailserver.__
-  - If you don't have one, I'd start with installing Postfix. It even has selectable install
-    settings that will configure it as a local mailserver for you.
+   - If you don't have one, I'd start with installing Postfix. It even has selectable install
+     settings that will configure it as a local mailserver for you.
 
 ## 3-3 Add an admin user (Search Head Only)
 You'll need to create an admin user.
