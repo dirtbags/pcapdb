@@ -8,7 +8,7 @@ __The version numbers listed are the versions that the system was tested on.__
 
 ## On Debian/Ubuntu
 On all nodes:
- - `apt install -y postgresql postgresql-server-dev-all tshark python3 python3-pip python3-dev virtualenv uwsgi-plugin-python libsasl2-dev libldap2-dev supervisor dkms`
+ - `apt install -y postgresql postgresql-server-dev-all tshark python3 python3-pip python3-dev virtualenv uwsgi-plugin-python3 libsasl2-dev libldap2-dev supervisor dkms`
 
 On the search head:
  - `apt install -y rabbitmq-server nginx`
@@ -18,6 +18,10 @@ On the capture nodes:
 
 If you're building from source:
  - `apt install -y cmake libnuma-dev libssl-dev libhugetlbfs-dev libpcap-dev`
+
+You'll also need the pfring packages from http://packages.ntop.org
+ - x86\_64/PF\_RING/pfring 
+ - all/pfring-dkms 
 
 # Detailed General Requirements
 ## PostGres
@@ -56,7 +60,7 @@ Needed by the python ldap package
 
 ### Needed on Debian based systems
 We'll be using uwsgi to server the interface, but we'll install it through pip.
- - uwsgi-plugin-python 
+ - uwsgi-plugin-python3
 
 ## mlocate
 The makefile uses mlocate to check where certain things are. 

@@ -41,7 +41,10 @@ make install-monolithic
  - Like with most Makefiles, you can set the DESTDIR environment variable to specify where to
    install the system. `make install-search-head DESTDIR=/var/mypcaplocation`
  - This includes installing in place: `make install-capture-node DESTDIR=$(pwd)`. In this case, PcapDB 
-   won't install system scripts for various needed components, and it will run as the installing user.
+   won't install system scripts for various needed components. You will have to run it manually, see
+   below.
+ - If you're behind a proxy, you'll need to specify a proxy connection string using PROXY=host:port as
+   part of the make command.
 
 To make your life easier, however, you should work make sure the indexing code builds cleanly by running 'make' in the 'indexer/' directory.
 
@@ -65,25 +68,29 @@ The core/bin/post-install.sh script will handle the vast majority of the system 
 
 This will set up the databases and rabbitmq.
 
-
 ## 3-2 DESTDIR/etc/pcapdb.cfg 
 This is the main Pcapdb config file. You must set certain values before PcapDB will run at all.
 There are a few things you need to set in here manually:
- - (On capture nodes) The search head db password
- - (On capture nodes) The rabbitmq password
+ - __(On capture nodes) The search head db password__
+ - __(On capture nodes) The rabbitmq password__
     - Both of the above should be in the search head's pcapdb.cfg file.
- - (On search head) The local mailserver. 
+ - __(On search head) The local mailserver.__
   - If you don't have one, I'd start with installing Postfix. It even has selectable install
     settings that will configure it as a local mailserver for you.
 
 ## 3-3 Add an admin user (Search Head Only)
 You'll need to create an admin user.
+```
+sudo su - capture
+./bin/python core/manage.py add_user <username> <first_name> <last_name> <email>
+```
  - This will email you a link to use to set that user's password.
   - (This is why email had to be set up).
   - root@localhost is a reasonable email address, if you need it.
+  - *Note there manage.py also has a __createsuperuser__ command, which shouldn't be used.*
 
 ## 3-4 That should be it. 
-You should be able to get to the login screen on the https port of the search head. 
+You should be able to get to login with your admin account.
 
 ## 3-5 pfring-zc drivers
 One more thing. You should install the drivers specific to your capture card for pfring-zc. The

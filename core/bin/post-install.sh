@@ -179,6 +179,8 @@ if [ ${IS_CAPTURE_NODE} -eq 0 ]; then
     # (capture).
     sudo -u ${PCAPDB_USER} ./bin/python core/manage.py migrate --database=capture_node
 
+    sudo -u ${PCAPDB_USER} ./bin/python core/manage.py collectstatic
+
     if [ ${IS_SEARCH_HEAD} -eq 1 ]; then 
         echo -e "\033[1;31m"
         echo "You will still have to do the following manually."
@@ -187,8 +189,8 @@ if [ ${IS_CAPTURE_NODE} -eq 0 ]; then
         echo " - Restart everything in supervisorctl"
         echo -e "\033[0m"
     fi
-    supervisord restart capture_runner
+    supervisorctl restart capture_runner
 fi
 
-supervisord restart pcapdb_celery
+supervisorctl restart pcapdb_celery
 

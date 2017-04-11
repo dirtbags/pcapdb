@@ -97,7 +97,7 @@ common-configs: ${DESTDIR}/etc/syslog.conf ${DESTDIR}/etc/logrotate.conf ${DESTD
 		echo "[include]"                                >> ${SUPERVISORD_CONF}; \
 		echo "files = ${DESTDIR}/etc/supervisord*.conf"	>> ${SUPERVISORD_CONF}; \
 	fi
-	if service supervisor; then \
+	if service supervisor status 1>/dev/null 2>&1; then \
         service supervisor restart; \
     else \
         service supervisord restart; \
