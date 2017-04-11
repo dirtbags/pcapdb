@@ -87,16 +87,65 @@ sudo su - capture
  - This will email you a link to use to set that user's password.
   - (This is why email had to be set up).
   - root@localhost is a reasonable email address, if you need it.
-  - *Note there manage.py also has a __createsuperuser__ command, which shouldn't be used.*
+  - *Note that manage.py also has a __createsuperuser__ command, which shouldn't be used.*
 
 ## 3-4 That should be it. 
-You should be able to get to login with your admin account.
+You should be able to login with your admin account.
+
+### Things that can, and have, gone wrong
+ - If your host doesn't have a host name in DNS, you can set an IP in the 'search\_head\_host' variable
+   in the pcapdb.cfg file. 
 
 ## 3-5 pfring-zc drivers
 One more thing. You should install the drivers specific to your capture card for pfring-zc. The
 packages from NTOP actually build the drivers for your kernel on the fly when installed, though
 you may have to reinstall that package whenever you do a kernel update.  Building and installing
 from source is also fairly straightforward.
+
+# Using PcapDB
+Now that the system is installed and running, you have to set up a capture site, capture node, and some users.
+
+## Create a Capture Site
+Every capture node belongs to a capture site.
+ - Each capture site has it's own group, only users in that group can search the site.
+ - They also have an admin group. Users must be a member of this to admin (setup disk on, or start capture on) capture nodes in that site.
+ - These can be LDAP groups.
+
+## Create a Capture Node
+Add a capture node to your site. 
+ - If the search head is also a capture node, it will have to be added to.
+ - If the buttons for disk and capture configuration aren't active, your user isn't an admin for the relevant site.
+
+## Setup disks
+PcapDB needs three types of disk:
+ - An OS disk, which is barely used. 
+ - An index disk or disks. It's generally recommended to have two identical disks for this to set up a RAID 1.
+ - A bunch of disk for capture storage. 
+
+ You've obviously already got an OS at this point. The other two can be any sort of hard disk, SSD, partition, or RAID. As long as the system thinks it's a block device, you should be fine. 
+
+#### Note 
+*The system is pretty dumb about what disks it considers to be block devices. Any /dev/sd or /dev/md device works, for now*
+
+### Add an Index Disk
+In the disk management interface, select one or two identical disks to act as the index disk. If more than one disk is selected, they will automatically be grouped together in a RAID 1 configuration.
+ - Click, 'create index disk' and the system will RAID, format, and name the disks appropriately.
+
+### Add a Capture Disk
+In the disk management interface, you can build RAID 5 arrays, and then assign those (or individual disks) as capture disks.
+ - While you can add all your disks individually as capture disks, it's recommended to RAID them for a bit of data safety.  RAID's of 9 disks are fairly reasonable.
+ - Like with the index disk, select groups of disks, and click 'Create RAID 5'. Once that's done, you can add the 
+   resulting disk as a capture disk.
+ - Or you can add individual disks (or external RAIDs) as capture disks.
+ - Once a capture disk is added, it must be activated above before it can be captured to.
+ - You can also set disks as __spares__, which are shared across all RAIDS created by PcapDB.
+ - If RAIDS are ever degraded, they should be put in REPAIR mode automatically. They'll still be available to search, but won't be written to until they're fixed.
+
+## Set a capture interface, and go.
+In the capture interface, enable the interface or interfaces of your choice. 
+ - Each will get a separate thread (which will in turn be dedicated to it's own processor. So you shouldn't try to capture on more interfaces than half your CPU's).
+ - PFring mode is far less likely to drop packets than libpcap mode. 
+ - PFringZC mode is far less likely to drop packets than PFring mode, but requires a license from NTOP.
 
 # Details on the various subsystems
 PcapDB uses quite a few off-the-shelf open source systems, and it's useful to understand how those

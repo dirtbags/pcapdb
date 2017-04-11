@@ -4,8 +4,10 @@
 capture_node = False
 search_head = False
 
-# Required, even for the search head.
-# The FQDN of the host on which the search head is located. 
+# Required for capture nodes
+# The FQDN of the host on which the search head is located. You can set this to an IP, if you
+# don't have an FQDN. Defaults to the hostname your host thinks it has, which will need to be
+# resolvable by DNS.
 search_head_host=
 
 # Required
