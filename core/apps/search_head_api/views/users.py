@@ -8,6 +8,7 @@ from rest_framework.permissions import AllowAny
 from apps.search_head_api.views.base import SearchHeadAPIView
 from apps.search_head_api.models.auth import UserConfirmation, UserExtraModel
 
+from django.db import transaction
 from django.contrib.auth.models import User, Group
 from django.conf import settings
 from django.http import Http404
@@ -41,7 +42,6 @@ class UserAddView(SearchHeadAPIView):
         first_name = serializers.CharField(min_length=1, max_length=20, required=False)
         last_name = serializers.CharField(min_length=1, max_length=20, required=False)
         user_type = serializers.ChoiceField([t.id for t in UserExtraModel.USER_TYPES])
-        timezone = serializers.ChoiceField(pytz.common_timezones)
 
         def validate(self, data):
             if data['user_type'] != UserExtraModel.LDAP and \
@@ -50,6 +50,7 @@ class UserAddView(SearchHeadAPIView):
                                                   "users.")
             return data
 
+    @transaction.atomic
     def post(self, request):
         """Add a new user. The user will have a random password set, and will be emailed an email
         confirmation/password change request.
@@ -79,9 +80,9 @@ class UserAddView(SearchHeadAPIView):
                                   'login, and their permissions are based on LDAP groups.'})
 
         user = User.objects.create_user(username, email=ser.validated_data['email'],
-                                        first_name=ser.validated_data['first_name'],
-                                        last_name=ser.validated_data['last_name'])
-        user.extra = UserExtraModel(type=user_type, timezone=ser.validated_data['timezone'])
+                                        first_name=ser.validated_data.get('first_name', ''),
+                                        last_name=ser.validated_data.get('last_name', ''))
+        user.extra = UserExtraModel(type=user_type)
 
         if user_type == UserExtraModel.BASIC:
             # Generate a new confirmation object with a random token.

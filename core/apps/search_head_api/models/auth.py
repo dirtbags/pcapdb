@@ -62,10 +62,6 @@ class UserExtraModel(models.Model):
                             choices=[(t.id, t.name) for t in USER_TYPES],
                             help_text="Different user types are managed and authenticated "
                                       "differently.")
-    timezone_name = models.CharField(max_length=max(map(len, pytz.common_timezones)),
-                                     choices=TIMEZONES,
-                                     help_text="Timezone to use to display times for this user.")
-
     @property
     def timezone(self):
         return pytz.timezone(self.timezone)
