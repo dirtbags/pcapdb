@@ -11,7 +11,7 @@ than 1% the size of the captured data).
 
 For hardware requirements, see [HARDWARE.md](HARDWARE.md).
 
-[FactSheet_PcapDBv2.pdf](Also see our fact sheet)
+(Also see our fact sheet)[FactSheet_PcapDBv2.pdf]
 
 ## DESTDIR
 Many things in this file refer to DESTDIR as a pathname prefix. The default, and that used by future pcapdb packages, is `/var/pcapdb`.
