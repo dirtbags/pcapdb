@@ -519,7 +519,7 @@ class InitCaptureDeviceView(DeviceCmdView):
     """
     task = device_tasks.init_capture_device
     track = True
-    track_desc = "Initializing {} for capture"
+    track_desc = "Initializing disk for capture"
     track_start_context = {'info': 'Device initialization has started.'}
     device_limit = 1
 

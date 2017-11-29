@@ -69,6 +69,14 @@
                 <button class="btn btn-success">Update Settings</button>
             </div>
           </div>
+          <div class="row">
+            <div class="col-md-5">
+              <label for="local_bucket_mem">GB's of local memory to use for bucket. This disables
+              hugepages for capture (the capture system normally consumes all available
+              hugepages).</label>
+              <input type="number" id="local_bucket_mem" name="local_bucket_mem"/>
+            </div>
+          </div>
         </form>
       </div>
     </div>
@@ -202,6 +210,9 @@
               }
               mode_list.append(opt);
             }
+
+            var local_bucket_mem = state['local_bucket_mem'];
+            $('#local_bucket_mem').val(local_bucket_mem);
 
             if (state['capture_status'][0] == 'OK' ||
                 state['capture_status'][0] == 'RESTART') {

@@ -56,6 +56,10 @@ class Status(SingletonModel):
     capture_mode = models.CharField(choices=CAPTURE_MODES, max_length=10, null=False,
                                     default='pfring-zc',
                                     help_text="The capture library to try to use.")
+    local_bucket_mem = models.IntegerField(null=True, default=None,
+                                           help_text="Amount of memory (in GB) to allocate for "
+                                                     "capture buckets. Setting this disables "
+                                                     "hugepages.")
     last_stats_upload = models.DateTimeField(null=True,
                                              help_text="The last time we uploaded capture "
                                                        "statistics to the search head.")
@@ -270,6 +274,18 @@ class Status(SingletonModel):
             self.running_message = 'No interfaces are enabled.'
             self.save()
             return self.NOT_OK
+            
+        if self.local_bucket_mem is not None:
+            # Buckets are by default made from 128 2MB hugepages. Instead of using hugepages
+            # we instead tell the system to use local_bucket_mem GB worth of buckets.
+            buckets = self.local_bucket_mem * 1024**3 / (1024**2 * 2 * 128)
+            buckets_needed = (len(interfaces) + 4)*16
+            if buckets < buckets_needed:
+                self.running_message = 'Not enough bucket memory given. Have {}, need at least '\
+                                       '{}.'.format(buckets, buckets_needed)
+                self.save()
+                return self.NOT_OK
+            capture_cmd.extend(['-m', str(buckets)])
 
         for iface in interfaces:
             iface.prepare()

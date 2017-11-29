@@ -65,6 +65,7 @@ def set_capture_settings(self, settings):
         log.info('Invalid capture mode: {}'.format(mode))
         return {'warning': 'Invalid capture mode: {}'.format(mode)}
 
+    status.local_bucket_mem = settings.get('local_bucket_mem', None)
     status.capture_mode = mode
     status.settings_changed = True
     status.save()

@@ -10,6 +10,7 @@ import time
 import uuid
 
 MOUNT_CMD = '/bin/mount'
+UMOUNT_CMD = '/bin/umount'
 UDEVADMIN_CMD = '/sbin/udevadm'
 CAPTURE_GROUP = 'capture'
 
@@ -65,6 +66,11 @@ if not os.path.exists(uuid_path):
 # We also assume we have permission to write here.
 if not os.path.exists(mount_point):
     os.mkdir(mount_point)
+
+# Try to unmount the device first, in case automounting caught it.
+umount_cmd = [UMOUNT_CMD, uuid_path]
+# It's ok if this fails.
+subprocess.call(umount_cmd)
 
 # Mount the disk
 mount_cmd = [MOUNT_CMD, '-t', 'xfs', uuid_path, mount_point]

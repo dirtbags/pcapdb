@@ -35,19 +35,20 @@ class Command(BaseCommand):
         ser = UserAddView.PostSerializer(data=options)
         if not ser.is_valid():
             print("Invalid arguments: {}".format(ser.errors))
+            return 
  
         username = ser.validated_data['username']
 
         # See if this user already exists.
         if User.objects.filter(username=ser.validated_data['username']).exists():
             print ('User {} already exists.'.format(username))
+            return
 
         user = User.objects.create_user(username=username,
                                         email=ser.validated_data['email'],
                                         first_name=ser.validated_data['first_name'],
                                         last_name=ser.validated_data['last_name'])
-        user.extra = UserExtraModel(type=ser.validated_data['user_type'],
-                                    timezone=ser.validated_data['timezone'])
+        user.extra = UserExtraModel(type=ser.validated_data['user_type'])
                         
         confirm = UserConfirmation.make_confirm(user)
         # Create a fake https request to use to build the url to the password reset page.

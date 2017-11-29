@@ -86,6 +86,7 @@ You'll need to create an admin user.
 sudo su - capture
 ./bin/python core/manage.py add_user <username> <first_name> <last_name> <email>
 ```
+ - Usernames must be at least four characters long.`
  - This will email you a link to use to set that user's password.
   - (This is why email had to be set up).
   - root@localhost is a reasonable email address, if you need it.

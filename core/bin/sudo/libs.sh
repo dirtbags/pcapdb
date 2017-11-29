@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 
 # Only allow md and sd devices
-DEVICE_RE='/dev/(md[0-9]+|(sd|xvd)[a-z]+[0-9]*)'
+DEVICE_RE='/dev/(md[0-9]+|(sd|xvd)[a-z]+[0-9]*|loop[0-9])'
 MD_DEVICE_RE='/dev/md[0-9]+'
 
 function check_arg {

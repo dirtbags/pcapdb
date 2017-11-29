@@ -523,7 +523,7 @@ class LVMDevice(Device):
 
 class DiskDevice(Device):
     type = Device.DISK_TYPE
-    COMPAT_RE = re.compile(r'(?:sd|xvd)[a-z]+\d*$')
+    COMPAT_RE = re.compile(r'(?:(?:sd|xvd)[a-z]+|loop)\d*$')
 
     def __init__(self, dev):
         Device.__init__(self, dev)

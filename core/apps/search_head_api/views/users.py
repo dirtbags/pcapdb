@@ -48,6 +48,7 @@ class UserAddView(SearchHeadAPIView):
                     ('first_name' not in data or 'last_name' not in data):
                 raise serializers.ValidationError("First and Last name required for non-LDAP "
                                                   "users.")
+
             return data
 
     @transaction.atomic

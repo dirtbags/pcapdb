@@ -14,7 +14,7 @@ On the search head:
  - `apt install -y rabbitmq-server nginx`
 
 On the capture nodes:
- - `apt install -y librabbitmq4 ethtool`
+ - `apt install -y librabbitmq4 ethtool xfsprogs mdadm`
 
 If you're building from source:
  - `apt install -y cmake libnuma-dev libssl-dev libhugetlbfs-dev libpcap-dev`
@@ -87,6 +87,8 @@ We use nginx to server the interface.
 We need to talk to the rabbitmq server, and probe network interfaces.
  - librabbitmq
  - ethtool
+ - mdadm (For building RAIDS)
+ - xfsprogs (For creating xfs file sytems)
 
 ## PFRING
 For pfring, ntop.org provides RPM's and DEB's at http://packages.ntop.org/
