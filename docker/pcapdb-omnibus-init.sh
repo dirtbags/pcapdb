@@ -10,7 +10,20 @@ start () {
   log "Starting $1..."
 }
 
+log "Setting up directories and permissions"
+: >> /var/pcapdb/log/django.log
+chown capture /var/pcapdb/log/django.log
+
 # XXX: Tech Debt: this is not a great way to start these services. Maybe that doesn't matter, though?
+
+if [ ! -f /etc/ssl/pcapdb.pem ]; then
+  log "Generating /etc/ssl/pcapdb.pem"
+  openssl req -nodes -x509 -newkey rsa:4096 -days 9999 -keyout /etc/ssl/pcapdb.key -out /etc/ssl/pcapdb.pem \
+  -subj '/CN=pcapdb'
+fi
+
+start NGINX
+nginx
 
 start PostgreSQL
 pg_ctlcluster 9.5 main start
@@ -18,11 +31,12 @@ pg_ctlcluster 9.5 main start
 start RabbitMQ
 rabbitmq-server &
 
-start Supervisor
-supervisord -c /etc/supervisor/supervisord.conf
-
+# XXX: what is a more appropriate place for initialized?
 if [ ! -f /var/pcapdb/initialized ]; then
   log "Running initial setup..."
-  /var/pcapdb/core/bin/post-install.sh -s -c 127.0.0.1
+  yes yes | /var/pcapdb/core/bin/post-install.sh -s -c 127.0.0.1
   touch /var/pcapdb/initialized
 fi
+
+start Supervisor
+supervisord -n -c /etc/supervisor/supervisord.conf

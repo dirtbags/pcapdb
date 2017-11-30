@@ -34,25 +34,22 @@ RUN wget http://apt-stable.ntop.org/16.04/all/apt-ntop-stable.deb && \
 
 ## Pre-install
 
-# XXX: Combine these into `COPY . /var/pcapdb` for production; we're omitting the docker directory so builds don't have to replay every step when we change this file (the one you're reading right now)
-COPY Makefile requirements.txt /var/pcapdb/
-COPY core/ /var/pcapdb/core/
-COPY etc/ /var/pcapdb/etc/
-COPY indexer/ /var/pcapdb/indexer/
-COPY system/ /var/pcapdb/system/
+# XXX: Combine these into `COPY . /src` for production; we're omitting the docker directory so builds don't have to replay every step when we change this file (the one you're reading right now)
+COPY Makefile requirements.txt /src/
+COPY core/ /src/core/
+COPY etc/ /src/etc/
+COPY indexer/ /src/indexer/
+COPY system/ /src/system/
 
-WORKDIR /var/pcapdb/
-# Generate our own SSL keypair
-RUN openssl req -nodes -x509 -newkey rsa:4096 -days 9999 -keyout /etc/ssl/pcapdb.key -out /etc/ssl/pcapdb.cert \
-  -subj '/CN=pcapdb'
+RUN useradd --system capture
+
+WORKDIR /src/
 # Write out an nginx configuration so the install-search-head won't
 RUN sed 's,DESTDIR,/var/pcapdb,g; s,server_name HOSTNAME,server_name _,; s,HOSTNAME,pcapdb,g' etc/nginx.conf.tmpl > /etc/nginx/conf.d/pcapdb.conf
 # Stub out `service` so install-search-head won't try (and fail) to start daemons
 COPY docker/fake-service.sh /usr/local/bin/service
 # Stub out openssl so install-search-head won't generate a cert and block the build waiting for keyboard input
 COPY docker/fake-service.sh /usr/local/bin/openssl
-
-RUN useradd --system capture
 
 ## Install
 # XXX: Combine these into `RUN make install-common install-search-head install...` for production
@@ -63,11 +60,13 @@ RUN make install-monolithic
 
 ## Post-install
 
-# Remove the fake commands
-RUN rm /usr/local/bin/service /usr/local/bin/openssl
+# Remove the source tree and fake commands
+RUN rm -rf /src \
+  /usr/local/bin/service /usr/local/bin/openssl
 
 COPY docker/pcapdb-omnibus-init.sh /usr/local/sbin/
 
-# XXX: As much as possible, things need to log to stderr
+# XXX: As much as possible, things need to log to stdout
 
+WORKDIR /var/pcapdb
 CMD [ "/usr/local/sbin/pcapdb-omnibus-init.sh" ]
