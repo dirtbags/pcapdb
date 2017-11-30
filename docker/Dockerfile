@@ -14,7 +14,8 @@ RUN apt-get -y update && \
   rabbitmq-server nginx \
   librabbitmq4 ethtool xfsprogs mdadm \
   cmake libnuma-dev libssl-dev libhugetlbfs-dev libpcap-dev \
-  wget locate acl sudo
+  runit \
+  wget locate acl sudo iputils-ping
 # XXX: Last line above is undocumented dependencies
 
 ### Install PFRing
@@ -51,6 +52,7 @@ COPY docker/fake-service.sh /usr/local/bin/service
 # Stub out openssl so install-search-head won't generate a cert and block the build waiting for keyboard input
 COPY docker/fake-service.sh /usr/local/bin/openssl
 
+RUN useradd --system capture
 
 ## Install
 # XXX: Combine these into `RUN make install-common install-search-head install...` for production
@@ -64,7 +66,8 @@ RUN make install-monolithic
 # Remove the fake commands
 RUN rm /usr/local/bin/service /usr/local/bin/openssl
 
-# XXX: If possible we should avoid running systemd in a container. IIRC PcapDB already installs a service manager, maybe we could use that?
+COPY docker/pcapdb-omnibus-init.sh /usr/local/sbin/
+
 # XXX: As much as possible, things need to log to stderr
 
-CMD [ "/bin/bash" ]
+CMD [ "/usr/local/sbin/pcapdb-omnibus-init.sh" ]
