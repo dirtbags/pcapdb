@@ -12,7 +12,6 @@ It calls dkms, which promptly explodes,
 since debian doesn't have kernel headers for a coreos kernel.
 We are going to have to figure this out.
 
-
 Mount Points
 ------------
 
