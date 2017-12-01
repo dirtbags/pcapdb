@@ -38,5 +38,8 @@ if [ ! -f /var/pcapdb/initialized ]; then
   touch /var/pcapdb/initialized
 fi
 
+log "Writing configuration file"
+[ -n "$PCAPDB_HOSTNAME" ] && sed -i 's/.*allowed_hosts =.*/allowed_hosts = '"$PCAPDB_HOSTNAME"'/' /var/pcapdb/etc/pcapdb.cfg
+
 start Supervisor
 supervisord -n -c /etc/supervisor/supervisord.conf
