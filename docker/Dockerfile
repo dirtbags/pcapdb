@@ -8,9 +8,14 @@ ENV http_proxy=${http_proxy} https_proxy=${https_proxy}
 # Wireshark hangs waiting for you to type "no" unless you provide the answer beforehand
 RUN echo 'wireshark-common wireshark-common/install-setuid boolean false' | debconf-set-selections
 
+RUN apt-get -y update
+RUN apt-get -y install postgresql-common
+
+# Please don't set up a database for me
+RUN sed -i 's/#\?\(create_main_cluster\).*/\1 = false/' /etc/postgresql-common/createcluster.conf
+
 # Install things we need
-RUN apt-get -y update && \
-  apt-get -y install postgresql postgresql-server-dev-all python3 python3-pip python3-dev virtualenv uwsgi-plugin-python3 libsasl2-dev libldap2-dev supervisor \
+RUN apt-get -y install postgresql postgresql-server-dev-all python3 python3-pip python3-dev virtualenv uwsgi-plugin-python3 libsasl2-dev libldap2-dev supervisor \
   rabbitmq-server nginx \
   librabbitmq4 ethtool xfsprogs mdadm \
   cmake libnuma-dev libssl-dev libhugetlbfs-dev libpcap-dev \
@@ -68,5 +73,6 @@ COPY docker/pcapdb-omnibus-init.sh /usr/local/sbin/
 
 # XXX: As much as possible, things need to log to stdout
 
+ENV PGDATA /var/lib/postgresql/data
 WORKDIR /var/pcapdb
 CMD [ "/usr/local/sbin/pcapdb-omnibus-init.sh" ]
