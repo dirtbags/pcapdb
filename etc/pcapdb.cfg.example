@@ -27,6 +27,11 @@ session_secret =
 # Used only for testing, defaults to 443
 # http_port = 8111
 
+# What hostnames are we allowed to serve content *as*?
+# This is a list of hostnames that our web service runs under.
+# Defaults to the local hostname
+# allowed_hosts = 
+
 # The title for the splash page.
 splash_title=Warning
 # Text for the splash page
