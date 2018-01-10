@@ -12,8 +12,8 @@ cfgset () {
   cfg=$1
   var=$2
   val=${3:-MISSING_VARIABLE_NAME}
-  if [ -z "$val" ]; then
-    echo "ERROR: \$$var must be set!" 1>&2
+  if [ -z "$var" ]; then
+    echo "ERROR: \$$val must be set!" 1>&2
     exit 1
   fi
   
