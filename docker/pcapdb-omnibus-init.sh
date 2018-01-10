@@ -9,15 +9,15 @@ log () {
 
 log "Writing configuration file"
 cfgset () {
-  cfg=$1
-  var=$2
-  val=${3:-MISSING_VARIABLE_NAME}
-  if [ -z "$val" ]; then
-    echo "ERROR: \$$var must be set!" 1>&2
+  config_item=$1
+  value=$2
+  variable_name=${3:-MISSING_VARIABLE_NAME}
+  if [ -z "$value" ]; then
+    echo "ERROR: \$$variable_name must be set!" 1>&2
     exit 1
   fi
   
-  sed -i "s/^#\?\($cfg\) \?=.*/\1 = $val/" /var/pcapdb/etc/pcapdb.cfg
+  sed -i "s/^[# ]*\($config_item\) *=.*/\1 = $value/" /var/pcapdb/etc/pcapdb.cfg
 }
 cfgset allowed_hosts "$PCAPDB_HOSTNAME" PCAPDB_HOSTNAME
 cfgset search_head_host "$PCAPDB_HOSTNAME" PCAPDB_HOSTNAME

@@ -24,10 +24,25 @@ It will start up on port 443 of the host network interface.
 
 Next you will need to create your administrative account:
 
-    docker exec pcapdb sudo -u capture bin/python core/manage.py add_user admin Ad Ministrator you@example.com
+    email=you@example.com
+    docker exec pcapdb sudo -u capture bin/python core/manage.py add_user admin Adam Inistrator $email
 
 Click on the link in your email to set a password and finish account creation.
+The account name will be `admin`.
 
+
+Setup
+-----
+
+You can now follow the [main README](../README.md),
+picking up at the section entitled "Using PcapDB".
+
+When you set up a capture node,
+you will need to know the hostname of the container.
+For some reason, `localhost` is not accepted.
+To get the container's hostname:
+
+    docker exec pcapdb hostname
 
 
 TODO

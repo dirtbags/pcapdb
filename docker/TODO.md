@@ -2,6 +2,7 @@ Things that need fixin'
 =======================
 
 - Are we going to need cron?
+- Registration emails come from docker container hostname, how can we override that with $PCAPDB_HOSTNAME?
 
 
 pfring
