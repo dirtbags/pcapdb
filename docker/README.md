@@ -16,8 +16,8 @@ Running It
 This assumes you want to bind-mount `/srv/pcapdb`
 
     PCAPDB_BASE=/srv/pcapdb
-    PCAPDB_HOSTNAME=$(hostname -f) export PCAPDB_HOSTNAME
-    PCAPDB_MAILHOST=mail.example.com export PCAPDB_MAILHOST
+    PCAPDB_HOSTNAME=$(hostname -f)
+    PCAPDB_MAILHOST=mail.example.com
     docker run -d --name pcapdb --network=host -e PCAPDB_HOSTNAME=$PCAPDB_HOSTNAME -e PCAPDB_MAILHOST=$PCAPDB_MAILHOST -v $PCAPDB_BASE/etc:/var/pcapdb/etc -v $PCAPDB_BASE/postgresql:/var/lib/postgresql/data pcapdb
 
 It will start up on port 443 of the host network interface.

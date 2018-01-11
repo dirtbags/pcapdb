@@ -187,16 +187,6 @@ class Device:
         return self._RAID_MAP.get(self.name)
 
     @property
-    def uuid_dev_path(self):
-        """
-        :return: The /dev/disk/by-uuid/ path to this device.
-        """
-        if not self.uuid:
-            raise RuntimeError("Device {.name} has no UUID".format(self))
-
-        return os.path.join('/dev/disk/by-uuid', self.uuid)
-
-    @property
     def size_hr(self):
         """
         :return: A string of the human readible size for the device.
@@ -230,7 +220,7 @@ class Device:
             return self._MOUNT_MAP[self.alias]['fs']
         elif os.getuid() == 0:
             # If we can't get the filesystem from the mount table, check with blkid.
-            blkid_cmd = [settings.SUDO_PATH, BLKID_CMD, '-o', 'value', '-s', 'TYPE', 
+            blkid_cmd = [settings.SUDO_PATH, BLKID_CMD, '-o', 'value', '-s', 'TYPE',
                          '-p', self.dev_path]
             blkid_proc = subprocess.Popen(blkid_cmd, stdout=subprocess.PIPE)
             fs = bytes(blkid_proc.stdout.read().strip()).decode('utf8')
@@ -319,6 +309,8 @@ class Device:
         devices = set(os.listdir(BLOCK_PATH))
         old_devices = set(cls._DEVICES.keys())
 
+        log.info("devices: %r"%devices)
+        log.info("old_devices: %r"%old_devices)
         # Remove any devices that are no longer present.
         for mdev in old_devices - devices:
             del cls._DEVICES[mdev]
@@ -356,6 +348,8 @@ class Device:
                 dev_ob.map_member_devices()
             if dev_ob.type == Device.LVM_TYPE:
                 dev_ob.map_slaves()
+                
+        log.info("cls._DEVICES: %r"%cls._DEVICES)
 
         cls._clean_raid_map()
 
@@ -386,11 +380,13 @@ class Device:
 
         cls.refresh()
 
-        uuid_path = os.path.join('/dev/disk/by-uuid', uuid)
-        if not os.path.exists(uuid_path):
+        # kludge 2018-01-11 neale
+        # Docker doesn't run udev, we needed a more universal way to find devices
+        dev_path = subprocess.run([BLKID_CMD, "-o", "device", "-t", "UUID=" + uuid], stdout=subprocess.PIPE).stdout.strip().decode('utf-8')
+        if not dev_path:
             return None
 
-        dev_name = os.path.split(os.path.realpath(uuid_path))[-1]
+        dev_name = os.path.split(dev_path)[-1]
         return cls._DEVICES.get(dev_name)
 
     @classmethod
@@ -980,7 +976,7 @@ def init_index_device(*devices, task=None):
             raise RuntimeError("Can't find disk: {}.".format(dev))
         dev_ob = bd[dev]
         if dev_ob.state:
-            raise RuntimeError("Disk {} already in use: {]".format(dev, dev_ob.state))
+            raise RuntimeError("Disk {} already in use: {}".format(dev, dev_ob.state))
 
         dev_obs.append(dev_ob)
 
