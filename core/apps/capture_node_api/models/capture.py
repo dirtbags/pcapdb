@@ -13,6 +13,7 @@ __author__ = 'pflarr'
 
 SUDO_CMDS = settings.SITE_ROOT/'core'/'bin'/'sudo'
 MOUNT_UUID_CMD = SUDO_CMDS/'mount_by_uuid'
+BLKID_CMD = '/sbin/blkid'
 
 
 class Disk(models.Model):
@@ -65,13 +66,13 @@ class Disk(models.Model):
         # We don't unmount the disk; it's most likely busy.
 
     @property
-    def uuid_dev(self):
-        """Path the the disk's device by uuid."""
-        return os.path.join('/dev/disk/by-uuid', self.uuid)
+    def dev_path(self):
+        """Path the the disk's device."""
+        return subprocess.run([BLKID_CMD, "-o", "device", "-t", "UUID=" + self.uuid], stdout=subprocess.PIPE).stdout.strip().decode('utf-8')
 
     @property
     def dev_name(self):
-        return os.path.split(os.path.realpath(self.uuid_dev))[-1]
+        return os.path.split(self.dev_path)[-1]
 
     @property
     def mountpoint(self):
@@ -81,8 +82,7 @@ class Disk(models.Model):
     @property
     def device(self):
         """The device's dev name. ie: sda"""
-        dev_path = os.path.realpath(self.uuid_dev)
-        return dev_path.split('/')[-1]
+        return self.dev_name
 
     @property
     def mounted(self):
@@ -142,8 +142,7 @@ class Disk(models.Model):
         :param uuid: The uuid string of the mounted disk.
         """
 
-        uuid_path = os.path.join('/dev/disk/by-uuid', uuid)
-        dev_path = os.path.realpath(uuid_path)
+        dev_path = self.dev_path
 
         mount_lines = open('/etc/mtab').read().split('\n')
         mount_points = []
