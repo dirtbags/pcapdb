@@ -138,7 +138,7 @@ class Status(SingletonModel):
                 if outs.endswith("(deleted)") and outs.split()[0] == settings.CAPTURE_CMD:
                     return self.RESTART, "The capture program has been updated. Restart needed."
                 else:
-                    return self.NOT_OK, "Capture isn't running. ({} != {})".format(outs, 
+                    return self.NOT_OK, "Capture isn't running. ({} != {})".format(outs,
                             settings.CAPTURE_CMD)
 
         # If the number of queues or the the enabled status doesn't match up with

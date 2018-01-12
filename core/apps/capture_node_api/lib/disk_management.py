@@ -309,8 +309,6 @@ class Device:
         devices = set(os.listdir(BLOCK_PATH))
         old_devices = set(cls._DEVICES.keys())
 
-        log.info("devices: %r"%devices)
-        log.info("old_devices: %r"%old_devices)
         # Remove any devices that are no longer present.
         for mdev in old_devices - devices:
             del cls._DEVICES[mdev]
@@ -349,8 +347,6 @@ class Device:
             if dev_ob.type == Device.LVM_TYPE:
                 dev_ob.map_slaves()
                 
-        log.info("cls._DEVICES: %r"%cls._DEVICES)
-
         cls._clean_raid_map()
 
     @classmethod

@@ -19,7 +19,7 @@ RUN apt-get -y install postgresql postgresql-server-dev-all python3 python3-pip 
   rabbitmq-server nginx \
   librabbitmq4 ethtool xfsprogs mdadm \
   cmake libnuma-dev libssl-dev libhugetlbfs-dev libpcap-dev \
-  runit \
+  busybox \
   wget locate acl sudo iputils-ping
 # XXX: Last line above is undocumented dependencies
 

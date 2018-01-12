@@ -66,4 +66,6 @@ fi
 
 
 log "Starting Supervisor"
-supervisord -n -c /etc/supervisor/supervisord.conf
+supervisord -c /etc/supervisor/supervisord.conf
+
+busybox syslogd -n -O /dev/stdout
