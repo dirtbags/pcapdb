@@ -3,7 +3,7 @@
 
 // This header is meant to contain macros and types needed by most of
 // the other components of this system. For simplicities sake, don't
-// do anything in here that would be dependent upon other components, 
+// do anything in here that would be dependent upon other components,
 // as that would create circular dependencies.
 
 #include <arpa/inet.h>

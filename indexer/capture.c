@@ -22,6 +22,7 @@ void * capture(void * arg) {
     switch (state->conf.capture_mode) {
         case CAP_MODE_PFRING:
         case CAP_MODE_PFRING_ZC:
+        
             pfring_stats(cap_state->pfring_if, &pf_stats);
             cap_state->pfring_last_sys_dropped = pf_stats.drop;
             cap_state->pfring_last_if_seen = pf_stats.recv;

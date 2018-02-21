@@ -18,7 +18,7 @@ RUN sed -i 's/#\?\(create_main_cluster\).*/\1 = false/' /etc/postgresql-common/c
 RUN apt-get -y install postgresql postgresql-server-dev-all python3 python3-pip python3-dev virtualenv uwsgi-plugin-python3 libsasl2-dev libldap2-dev supervisor \
   rabbitmq-server nginx \
   librabbitmq4 ethtool xfsprogs mdadm \
-  cmake libnuma-dev libssl-dev libhugetlbfs-dev libpcap-dev \
+  tshark cmake libnuma-dev libssl-dev libhugetlbfs-dev libpcap-dev \
   busybox \
   wget locate acl sudo iputils-ping
 # XXX: Last line above is undocumented dependencies
@@ -66,8 +66,8 @@ RUN make install-monolithic
 ## Post-install
 
 # Remove the source tree and fake commands
-RUN rm -rf /src \
-  /usr/local/bin/service /usr/local/bin/openssl
+#RUN rm -rf /src
+RUN rm -rf /usr/local/bin/service /usr/local/bin/openssl
 
 COPY docker/pcapdb-omnibus-init.sh /usr/local/sbin/
 
