@@ -21,6 +21,7 @@ cfgset () {
 }
 cfgset allowed_hosts "$PCAPDB_HOSTNAME" PCAPDB_HOSTNAME
 cfgset search_head_host "$PCAPDB_HOSTNAME" PCAPDB_HOSTNAME
+cfgset search_head_ui_host "${PCAPDB_HOSTNAME}${PCAPDB_PORT:+:}${PCAPDB_PORT}" PCAPDB_HOSTNAME
 cfgset host "$PCAPDB_MAILHOST" PCAPDB_MAILHOST
 cfgset capture_node true
 cfgset search_head true
