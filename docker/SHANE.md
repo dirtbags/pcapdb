@@ -20,9 +20,12 @@ Start container
 
 Load sample capture
 -------------------
+    sudo docker exec -it pcapdb apt-get -y install curl
+    sudo docker exec -it pcapdb curl -o /tmp/http.pcap "https://wiki.wireshark.org/SampleCaptures?action=AttachFile&do=get&target=http.cap"
 
-    docker exec -it pcapdb 'curl -o /tmp/http.pcap "https://wiki.wireshark.org/SampleCaptures?action=AttachFile&do=get&target=http.cap"'
-    docker exec -it pcapdb 'bin/capture -m 80 -r -i /tmp/http.pcap'
+Load downloaded pcap file into pcapdb
+
+    sudo docker exec -it pcapdb bin/capture -m 80 -r -i /tmp/http.pcap
 
 One packet in this capture:
 
