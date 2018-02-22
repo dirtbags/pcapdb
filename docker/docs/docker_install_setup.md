@@ -6,7 +6,7 @@ This guide picks up after the completion the ```docker build``` and ```docker ru
 
 You can confirm that your docker image is running with the ```docker ps``` command.
 
-## Connect to Docker container with interactive terminal
+## To connect to Docker container with interactive terminal
 
     docker exec -it pcapdb bash
 
@@ -34,6 +34,10 @@ For the docker images, we had to replace the Docker hostname (here ```91e49e2aaf
  with the actual URL of the host that the Docker container is residing on.
 
     https://your.hostname:port/pcapdb/conf/reset/05334536975d4976eef914bec1bb9966
+
+This setup:
+
+    https://localhost:22443
 
 Due to the self-signed SSL certificate, the web browser may give you an error. Click through that to accept and visit the site.  
 ![Cert Error](img/SelfsignedCertError.png)
@@ -123,6 +127,7 @@ Select row under the Capture Disks, and click the ```Enable``` button to switch 
 
 [//]: # (comment)
 
-cd var/pcapdb
+### Loading a sample
+Load a sample from the pcap directory / or use curl to get additional pcaps
 
     cd /var/pcapdb; bin/capture -m 80 -r -i /src/indexer/tests/data/many_sessions.pcap
