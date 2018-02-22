@@ -6,6 +6,9 @@ This guide picks up after the completion the ```docker build``` and ```docker ru
 
 You can confirm that your docker image is running with the ```docker ps``` command.
 
+## Connect to Docker container with interactive terminal
+
+    docker exec -it pcapdb bash
 
 ## Initial user setup
 You will have to have a mail server set up in order to create the initial system user.
@@ -17,7 +20,7 @@ Next you will need to create your administrative account (can be set to any name
 
 Response is:
 
-    $ docker exec pcapdb-shane sudo -u capture bin/python core/manage.py add_user admin Adam Inistrator $email
+    $ docker exec pcapdb sudo -u capture bin/python core/manage.py add_user admin Adam Inistrator $email
     New user 'admin' created.
     Admin group 'pcapdb_admin' does not exist. Creating it.
     User added to 'pcapdb_admin' group.
@@ -55,7 +58,7 @@ Enter in your values in the ```Create a Capture Site``` boxes towards the left.
 Now that a new site has been created, you will need to add your administrative user to the newed created ```Admin Group``` to have the permissions to proceed. Under the ```Admin``` tab, select ```Users```.
 ![New Site Created](img/SitesNewlyCreatedUsers.png)
 
-Select your user(s), and click on ```Add to Group```. Select the correct admin group from the dropdown menu. This should be the ```Admin``` group created under the previous step.
+Select your user(s), and click on ```Add to Group```. Select the correct admin group from the dropdown menu. This should be the ```admin``` group created under the previous step.
 ![Add To Group process image](img/AddUserAdmin.png)
 
 The Groups information will update when they are added.
@@ -78,6 +81,8 @@ In this instance, it returns
 
     91e49e2aaf4a
 
+Click on the ```Attach Capture Node``` button.
+
 ![Add DNS Host Name to Capture Nodes](img/CaptureNodeAddDNS.png)
 
 One added, you will have two buttons appear, ```Disks``` and ```Capture```.
@@ -91,9 +96,14 @@ Click on the ```Disks``` button. This will take to you the ```Capture Disks``` s
 Click on ```Devices``` to view the list of available block devices.
 ![](img/DisksDevices.png)
 
+### Setting up the Index RAID
+
 The index disk will expect to create its own RAID array. The Capture Disk can be passed a pre-configured RAID array, or can create a RAID5. *There are some functionality issues between the web interface and the backend for RAID5 that need to be addressed.*
 In Docker, the index disk has to be set up to emulate a RAID1 with a loopback.
 
+Select a row under the Devices table for your Index RAID, and click on ```Create Index RAID```.
+
+![](img/CreateRaidIndex.png)
 
 #### Restarting the container / PcapDB setup in Docker
 
@@ -112,3 +122,7 @@ Select row under the Capture Disks, and click the ```Enable``` button to switch 
 ![](img/EnabledCaptureDisk.png)
 
 [//]: # (comment)
+
+cd var/pcapdb
+
+    cd /var/pcapdb; bin/capture -m 80 -r -i /src/indexer/tests/data/many_sessions.pcap
