@@ -7,8 +7,8 @@ Set up loopback devices
 Be sure you're in a directory where you want them to live, NOT the docker directory,
 then run:
 
-    for i in /dev/md*; do mdadm --stop $i; mdadm --remove $i; done
-    losetup -D
+    for i in /dev/md*; do sudo mdadm --stop $i; sudo mdadm --remove $i; done
+    sudo losetup -D
     for i in $(seq 1 8); do rm -f loop$i.img; truncate -s 8g loop$i.img; sudo losetup /dev/loop$i loop$i.img; done
 
 
@@ -25,6 +25,8 @@ Load sample capture
 
 Load downloaded pcap file into pcapdb
 
+    sudo docker exec -it pcapdb apt-get -y install curl
+    sudo docker exec -it pcapdb curl -o /tmp/http.pcap "https://wiki.wireshark.org/SampleCaptures?action=AttachFile&do=get&target=http.cap"
     sudo docker exec -it pcapdb bin/capture -m 80 -r -i /tmp/http.pcap
 
 One packet in this capture:
