@@ -1,7 +1,9 @@
 Getting things going
 ====================
 
-First you need to set up your loopback devices.
+Set up loopback devices
+-----------------------
+
 Be sure you're in a directory where you want them to live, NOT the docker directory,
 then run:
 
@@ -10,13 +12,22 @@ then run:
     for i in $(seq 1 8); do rm -f loop$i.img; truncate -s 8g loop$i.img; sudo losetup /dev/loop$i loop$i.img; done
     
 
-Now you can start the container:
+Start container
+---------------
 
     docker run --name=pcapdb -p 22080:80 -p 22443:443 -e PCAPDB_HOSTNAME=refried.cfl.lanl.gov -e PCAPDB_MAILHOST=mail.lanl.gov --device=/dev/loop1:/dev/loop1 --device=/dev/loop2:/dev/loop2 --device=/dev/loop3:/dev/loop3 --device=/dev/loop4:/dev/loop4 --privileged=true -d pcapdb
 
-Once disks are set up, load in some pcap:
 
-    docker exec -it pcapdb 'bin/capture -m 80 -r -i /src/indexer/tests/data/many_sessions.pcap'
+Load sample capture
+-------------------
+
+    docker exec -it pcapdb 'curl -o /tmp/http.pcap "https://wiki.wireshark.org/SampleCaptures?action=AttachFile&do=get&target=http.cap"'
+    docker exec -it pcapdb 'bin/capture -m 80 -r -i /tmp/http.pcap'
+
+One packet in this capture:
+
+    2004-05-13 10:17:37.704928 IP 65.208.228.223.80 > 145.254.160.237.3372: Flags [.], ack 481, win 6432, length 0
+
 
 Docker build
 ============
