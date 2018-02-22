@@ -2,7 +2,7 @@ Getting things going
 ====================
 
 First you need to set up your loopback devices.
-Be sure you're in a directory where you want them to live,
+Be sure you're in a directory where you want them to live, NOT the docker directory,
 then run:
 
     for i in /dev/md*; do mdadm --stop $i; mdadm --remove $i; done
@@ -17,3 +17,25 @@ Now you can start the container:
 Once disks are set up, load in some pcap:
 
     docker exec -it pcapdb 'bin/capture -m 80 -r -i /src/indexer/tests/data/many_sessions.pcap'
+
+Docker build
+============
+
+    docker build --build-arg http_proxy=$http_proxy --build-arg https_proxy=$https_proxy --tag=pcapdb -f Dockerfile ../
+
+
+Set up Docker for proxy
+=======================
+
+From https://stackoverflow.com/questions/26550360/docker-ubuntu-behind-proxy
+
+    sudo mkdir /etc/systemd/system/docker.service.d
+    shannon@violet:~/code/pcapdb/docker$ sudo vim /etc/systemd/system/docker.service.d/http-proxy.conf
+    shannon@violet:~/code/pcapdb/docker$ sudo systemctl daemon-reload
+    shannon@violet:~/code/pcapdb/docker$ sudo systemctl restart docker
+    cashannon@violet:~/code/pcapdb/docker$ cat /etc/systemd/system/docker.service.d/http-proxy.conf
+    [Service]
+    Environment="HTTP_PROXY=http://proxyout.lanl.gov:8080/"
+    Environment="HTTPS_PROXY=http://proxyout.lanl.gov:8080/"
+    Environment="NO_PROXY=localhost,127.0.0.1"
+
