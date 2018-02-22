@@ -29,6 +29,21 @@ Load downloaded pcap file into pcapdb
     sudo docker exec -it pcapdb curl -o /tmp/http.pcap "https://wiki.wireshark.org/SampleCaptures?action=AttachFile&do=get&target=http.cap"
     sudo docker exec -it pcapdb bin/capture -m 80 -r -i /tmp/http.pcap
 
+
+Fix permissions
+---------------
+
+XXX: You may have to do one search first?
+
+    sudo docker exec -it pcapdb chown -R capture:capture /var/pcapdb/capture/index/
+
+
+Search!
+-------
+
+
+Start date 2003-whatever, search for "port 80"
+
 One packet in this capture:
 
     2004-05-13 10:17:37.704928 IP 65.208.228.223.80 > 145.254.160.237.3372: Flags [.], ack 481, win 6432, length 0
