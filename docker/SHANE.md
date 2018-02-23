@@ -33,12 +33,11 @@ This is stuff you need to do every time.
 Set up loopback devices
 -----------------------
 
-Be sure you're in a directory where you want them to live, NOT the docker directory,
-then run:
+Be sure you're in a directory where you want them to live, NOT the docker directory since the Docker daemon will include them, then run:
 
     for i in /dev/md*; do sudo mdadm --stop $i; sudo mdadm --remove $i; done
     sudo losetup -D
-    for i in $(seq 1 8); do rm -f loop$i.img; truncate -s 8g loop$i.img; sudo losetup /dev/loop$i loop$i.img; done
+    for i in $(seq 1 4); do rm -f loop$i.img; truncate -s 8g loop$i.img; sudo losetup /dev/loop$i loop$i.img; done
 
 
 
@@ -58,7 +57,7 @@ Only need to include as many devices that you plan to use for Search Head and Ca
 
 Initialize pcapdb
 ------------------
-Go to docker_install_setup.md to complete disk and user setup!
+Go to ```docker_install_setup.md``` to complete disk and user setup!
 
 Load sample capture
 -------------------
@@ -87,4 +86,3 @@ Start date 2003-whatever, search for "port 80"
 One packet in this capture:
 
     2004-05-13 10:17:37.704928 IP 65.208.228.223.80 > 145.254.160.237.3372: Flags [.], ack 481, win 6432, length 0
-
