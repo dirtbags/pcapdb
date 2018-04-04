@@ -127,7 +127,14 @@ Select row under the Capture Disks, and click the ```Enable``` button to switch 
 
 [//]: # (comment)
 
-### Loading a sample
-Load a sample from the pcap directory / or use curl to get additional pcaps
+### Populate the Database with Pcap Files
+
+To populate the database, use the ```capture.py``` script.
+
+    capture.py /var/pcapdb/bin/capture -m 80 -s -i file.pcap
+
+
+### Alternate Sample Loading
+You can load a sample from the pcap directory / or use curl to get additional pcaps.
 
     cd /var/pcapdb; bin/capture -m 80 -r -i /src/indexer/tests/data/many_sessions.pcap

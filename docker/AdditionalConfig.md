@@ -14,8 +14,8 @@ From https://stackoverflow.com/questions/26550360/docker-ubuntu-behind-proxy
     shannon@violet:~/code/pcapdb/docker$ sudo systemctl restart docker
     cashannon@violet:~/code/pcapdb/docker$ cat /etc/systemd/system/docker.service.d/http-proxy.conf
     [Service]
-    Environment="HTTP_PROXY=http://proxyout.lanl.gov:8080/"
-    Environment="HTTPS_PROXY=http://proxyout.lanl.gov:8080/"
+    Environment="HTTP_PROXY=http://yourproxy:8080/"
+    Environment="HTTPS_PROXY=http://yourproxy:8080/"
     Environment="NO_PROXY=localhost,127.0.0.1"
 
 Docker build
