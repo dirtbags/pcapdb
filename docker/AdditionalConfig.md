@@ -9,10 +9,10 @@ Set up Docker for proxy
 From https://stackoverflow.com/questions/26550360/docker-ubuntu-behind-proxy
 
     sudo mkdir /etc/systemd/system/docker.service.d
-    shannon@violet:~/code/pcapdb/docker$ sudo vim /etc/systemd/system/docker.service.d/http-proxy.conf
-    shannon@violet:~/code/pcapdb/docker$ sudo systemctl daemon-reload
-    shannon@violet:~/code/pcapdb/docker$ sudo systemctl restart docker
-    cashannon@violet:~/code/pcapdb/docker$ cat /etc/systemd/system/docker.service.d/http-proxy.conf
+    $:~/code/pcapdb/docker$ sudo vim /etc/systemd/system/docker.service.d/http-proxy.conf
+    $:~/code/pcapdb/docker$ sudo systemctl daemon-reload
+    $:~/code/pcapdb/docker$ sudo systemctl restart docker
+    ca$:~/code/pcapdb/docker$ cat /etc/systemd/system/docker.service.d/http-proxy.conf
     [Service]
     Environment="HTTP_PROXY=http://yourproxy:8080/"
     Environment="HTTPS_PROXY=http://yourproxy:8080/"
@@ -43,11 +43,11 @@ Be sure you're in a directory where you want them to live, NOT the docker direct
 
 Start container
 ----------
-Only need to include as many devices that you plan to use for Search Head and Capture Disks.
+Only need to include as many devices that you plan to use for Search Head and Capture Disks.  You can bind to 80 and 443 directly if you do not have other services running.
 
     docker run --name=pcapdb -p 22080:80 -p 22443:443 \
       -e PCAPDB_HOSTNAME=localhost \
-      -e PCAPDB_MAILHOST=mail.lanl.gov \
+      -e PCAPDB_MAILHOST=mail.server.com \
       --device=/dev/loop1:/dev/loop1 \
       --device=/dev/loop2:/dev/loop2 \
       --device=/dev/loop3:/dev/loop3 \
@@ -72,7 +72,7 @@ Load downloaded pcap file into pcapdb
 Fix permissions
 ---------------
 
-XXX: You may have to do one search first?
+XXX: You may have to do one search first to create directory / files for `chown`'ing
 
     sudo docker exec -it pcapdb chown -R capture:capture /var/pcapdb/capture/index/
 
