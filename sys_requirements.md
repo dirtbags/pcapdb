@@ -7,7 +7,7 @@ __The version numbers listed are the versions that the system was tested on.__
 # The mostly short version
 
 ## On Debian/Ubuntu
-On all nodes:
+On all nodes (in Ubuntu 18.04 enable the partner repository before running the below)
  - `apt install -y postgresql postgresql-server-dev-all tshark python3 python3-pip python3-dev virtualenv uwsgi-plugin-python3 libsasl2-dev libldap2-dev supervisor dkms`
 
 On the search head:
