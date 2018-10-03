@@ -57,6 +57,7 @@ def main():
                 # Capture should be started, but isn't
                 log.info("Capture was supposed to be running, but wasn't: {}".format(cap_status[1]))
                 status.start_capture()
+                log.info("Capture status message: {}".format(status.running_message))
         else:
             log.error("Invalid capture mode: {}".format(status.capture))
 

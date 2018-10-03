@@ -275,7 +275,7 @@ class Status(SingletonModel):
             self.save()
             return self.NOT_OK
             
-        if self.local_bucket_mem is not None:
+        if self.local_bucket_mem:
             # Buckets are by default made from 128 2MB hugepages. Instead of using hugepages
             # we instead tell the system to use local_bucket_mem GB worth of buckets.
             buckets = self.local_bucket_mem * 1024**3 / (1024**2 * 2 * 128)

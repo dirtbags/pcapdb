@@ -172,14 +172,15 @@ fi
 
 if [ ${IS_SEARCH_HEAD} -eq 0 ]; then 
     sudo -u ${PCAPDB_USER} ./bin/python core/manage.py migrate
+
+    sudo -u ${PCAPDB_USER} ./bin/python core/manage.py collectstatic
 fi
 
 if [ ${IS_CAPTURE_NODE} -eq 0 ]; then
     # The capture node database uses peer authentication, so this has to run as the pcapdb user
     # (capture).
+    sudo -u ${PCAPDB_USER} ./bin/python core/manage.py makemigrations capture_node_api
     sudo -u ${PCAPDB_USER} ./bin/python core/manage.py migrate --database=capture_node
-
-    sudo -u ${PCAPDB_USER} ./bin/python core/manage.py collectstatic
 
     if [ ${IS_SEARCH_HEAD} -eq 1 ]; then 
         echo -e "\033[1;31m"

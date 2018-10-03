@@ -68,7 +68,10 @@ class Disk(models.Model):
     @property
     def dev_path(self):
         """Path the the disk's device."""
-        return subprocess.run([BLKID_CMD, "-o", "device", "-t", "UUID=" + self.uuid], stdout=subprocess.PIPE).stdout.strip().decode('utf-8')
+        dev_path_cmd = subprocess.Popen([BLKID_CMD, "-o", "device", "-t", "UUID=" + self.uuid], stdout=subprocess.PIPE)
+        stdout, stderr = dev_path_cmd.communicate()
+        return stdout.strip().decode('utf-8')
+
 
     @property
     def dev_name(self):

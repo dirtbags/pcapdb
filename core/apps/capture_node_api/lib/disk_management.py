@@ -378,7 +378,10 @@ class Device:
 
         # kludge 2018-01-11 neale
         # Docker doesn't run udev, we needed a more universal way to find devices
-        dev_path = subprocess.run([BLKID_CMD, "-o", "device", "-t", "UUID=" + uuid], stdout=subprocess.PIPE).stdout.strip().decode('utf-8')
+        dev_path_cmd = subprocess.Popen([BLKID_CMD, "-o", "device", "-t", "UUID=" + uuid], stdout=subprocess.PIPE)
+        stdout, stderr = dev_path_cmd.communicate()
+        dev_path = stdout.strip().decode('utf-8')
+
         if not dev_path:
             return None
 
@@ -637,7 +640,7 @@ def make_raid5(disks, trial_run=False):
 
         # Make the RAID
         mdadm_cmd = [settings.SUDO_PATH, CREATE_CMD, '/dev/md{0:d}'.format(md_num),
-                     len(disks), (str(5))]
+                     str(len(disks)), str(5)]
         for disk in disks:
             mdadm_cmd.append(os.path.join('/dev', disk))
 

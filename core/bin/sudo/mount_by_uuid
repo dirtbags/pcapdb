@@ -45,7 +45,9 @@ if '-i' in sys.argv[2:]:
 else:
     mount_point = os.path.join(PCAPDB_PATH, 'capture', uuid)
 
-dev_path = subprocess.run([BLKID_CMD, "-o", "device", "-t", "UUID=" + uuid], check=True, stdout=subprocess.PIPE).stdout.strip()
+dev_path_cmd = subprocess.Popen([BLKID_CMD, "-o", "device", "-t", "UUID=" + uuid], stdout=subprocess.PIPE)
+stdout, stderr = dev_path_cmd.communicate()
+dev_path = stdout.strip().decode('utf-8')
 
 # Make our target directory if it doesn't exist.
 # We assume the basic directory structure exists, though.

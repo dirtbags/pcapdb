@@ -45,8 +45,9 @@ make install-monolithic
  - This includes installing in place: `make install-capture-node DESTDIR=$(pwd)`. In this case, PcapDB
    won't install system scripts for various needed components. You will have to run it manually, see
    below.
- - If you're behind a proxy, you'll need to specify a proxy connection string using PROXY=host:port as
-   part of the make command.
+ - If you're behind a proxy, you'll need to specify a proxy connection string using PROXY=host:port
+	as part of the make command.
+ - There's a bug in some 1.10.* versions of virtualenv that cause the install to fail. Specify the python3 virtualenv executable with using VIRTUALENV=<virtualenv path>
 
 To make your life easier, however, you should work make sure the indexing code builds cleanly by running 'make' in the 'indexer/' directory.
 
@@ -56,6 +57,18 @@ failures in certain pip installed packages. Add `PATH=$PATH:<pgsql_bin_path>` to
 
 # 3. Setup
 After running 'make install', there are a few more steps to perform.
+
+## 3-0: Setup hugepages (optional)
+Pcapdb uses 2MB hugepages to manage memory more efficiently. If a capture node has hugepages available,
+they will be automatically consumed by the capture process. 
+
+First, determine how much memory you want to devote to capture. I'd recommend about 70% of available
+system memory, which should be a minimum of 16G (64G or more are recommended). Then simply divide
+that amount by 2M to get the number of hugepages. 
+
+To enable hugepages, add 'hugepages=<number of pages> hugepagesz=2M' to your /boot/grub/grub.conf
+and reboot. You may also want to add it to /etc/default/grub in the GRUB_CMDLINE_LINUX variable,
+depending on your OS flavor (debian). 
 
 ## 3-1: Post-Install script
 The core/bin/post-install.sh script will handle the vast majority of the system setup for you.
@@ -92,8 +105,69 @@ sudo su - capture
   - root@localhost is a reasonable email address, if you need it.
   - *Note that manage.py also has a __createsuperuser__ command, which shouldn't be used.*
 
-## 3-4 That should be it.
-You should be able to login with your admin account.
+## 3-4 Add the capture nodes to the postgres pg\_hba.conf on the search head. 
+ This is needed if running a separate search head. See below.
+
+## 3-5 Set up a site. 
+ - You should be able to login with your admin account. 
+ - Click 'Admin', 'Capture Sites'. 
+ - Add a new capture site. The group name can be the same as the site name; the admin group should be different. 
+ - This adds a grouping of capture nodes to work with.
+
+## 3-6 Set up a capture node.
+ - Click 'Admin', 'Capture Nodes'. 
+ - Select your site, and add a new capture by hostname. 
+ - The you have to do this even in monolithic mode. 
+ - If this fails, check logs/celery.log on the capture node. 
+ - The capture node must already be able to connect to rabbitmq/celery on the search head for this to work.
+
+## 3-7 Add capture node permissions
+ - To be able to configure the capture node, you must set permissions for it. 
+ - Click 'Admin', 'Users'. 
+ - Select your user, and 'Add to Group'. Select the admin group for the site you added. 
+ - You can now edit the disks and configure capture. 
+
+## 3-8 Configure disks.
+Go into the Disks view - Click 'Admin', 'Capture Nodes', and then the 'Disks' button on the node you
+want to configure.
+
+### Index disks
+ - You'll need one or two equally sized disks dedicated to indexing. Select the disks from the available 'Devices'
+   table, and click 'Create Index RAID'. It will take a few minutes.
+ - If you choose two disks, it will create a RAID 1 of the two disks.
+
+### Capture disks
+ You'll need to set up some groups of disks for capture. 
+
+ - Select some number of equally sized disks from the 'Devices' list, and click 'Create RAID5'. This
+   will create a new md device from those disks. (If your disk is an external RAID, you can skip
+   this step.)
+ - Select your RAID, and click 'Initialize as Capture Disk'. This will format the RAID and add it to
+   the database. It should appear in the 'Capture Disks' table at the top of the page. 
+ - Repeat these steps to include as many capture disks as you like. PcapDB balances across them
+   according to their size, so they don't all have to end up as the same size. 
+ - You can also add dynamically re-assigned spares that will be used by any of your RAID's as needed, by
+   clicking a disk and selecting 'Add Spare'. 
+ - For each of the Capture Disks you added, select and enable them in the 'Capture Disks' table.
+
+Debugging note: Errors from this all go into the logs/celery.log on the capture node. 
+
+## 3-9 Configure Capture
+Go into the Capture view - Click 'Admin', 'Capture Nodes', and then the 'Capture' button on the node you
+want to configure.
+
+ - Select the interface you'd like to enable for capture, and click the red circle. Capture will be
+   enabled on this device on the next capture restart. 
+ - On capture settings, you can enable PFRing ZC mode, if you have a license and a compatible
+   network interface. All used interfaces must be compatible. 
+ - The multi-queue mode has been tested, but not well. The queue slider is only used when in
+   PFring-ZC mode.
+ - There's a bug in the capture settings; you must put a number (including zero) in the local memory
+   box. 
+
+When you're ready, click 'Start'. 
+
+Debugging note: Capture runner errors go into logs/django.log on the capture node. 
 
 ### Things that can, and have, gone wrong
  - If your host doesn't have a host name in DNS, you can set an IP in the 'search\_head\_host' variable
