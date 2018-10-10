@@ -167,7 +167,9 @@ want to configure.
 
 When you're ready, click 'Start'. 
 
-Debugging note: Capture runner errors go into logs/django.log on the capture node. 
+Debugging note: Capture runner errors go into logs/django.log on the capture node. For some reason you may get error messages about the capture runner not trying to do anything. As root, on the capture node, run supervisorctl restart capture_runner. Logs for the actual capture process are supposed to be in /var/pcapdb/log/capture.log, but sometimes show up in /var/log/messages if syslog didn't get configured correctly.
+
+
 
 ### Things that can, and have, gone wrong
  - If your host doesn't have a host name in DNS, you can set an IP in the 'search\_head\_host' variable

@@ -23,6 +23,8 @@ NGINX=/etc/nginx
 LOGROTATED=/etc/logrotate.d
 SUDOERSD=/etc/sudoers.d
 
+VIRTUALENV=virtualenv
+
 # If syslog writes as a special user (rather than root), set that here.
 SYSLOG_USER=syslog
 
@@ -48,7 +50,7 @@ install-common: setup_dirs ${DESTDIR}/bin/.virtual_env ${DESTDIR}/lib/packages_i
 # Create the python ${DESTDIR}/bin/python that will run all our python code
 ${DESTDIR}/bin/.virtual_env:
 	updatedb --prunepaths=${DESTDIR}
-	${PROXY_EXPORT} ${PATH_EXPORT} env virtualenv -p ${PYTHON3_PATH} ${DESTDIR}
+	${PROXY_EXPORT} ${PATH_EXPORT} env ${VIRTUALENV} -p ${PYTHON3_PATH} ${DESTDIR}
 	touch $@
 
 SYSTEM_DIRS=${DESTDIR}/capture ${DESTDIR}/capture/index ${DESTDIR}/log ${DESTDIR}/static ${DESTDIR}/etc ${DESTDIR}/media
