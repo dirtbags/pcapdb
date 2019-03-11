@@ -186,7 +186,7 @@ Now that the system is installed and running, you have to set up a capture site,
 
 ## Create a Capture Site
 Every capture node belongs to a capture site.
- - Each capture site has it's own group, only users in that group can search the site.
+ - Each capture site has its own group, only users in that group can search the site.
  - They also have an admin group. Users must be a member of this to admin (setup disk on, or start capture on) capture nodes in that site.
  - These can be LDAP groups.
 
@@ -222,7 +222,7 @@ In the disk management interface, you can build RAID 5 arrays, and then assign t
 
 ## Set a capture interface, and go.
 In the capture interface, enable the interface or interfaces of your choice.
- - Each will get a separate thread (which will in turn be dedicated to it's own processor. So you shouldn't try to capture on more interfaces than half your CPU's).
+ - Each will get a separate thread (which will in turn be dedicated to its own processor. So you shouldn't try to capture on more interfaces than half your CPU's).
  - PFring mode is far less likely to drop packets than libpcap mode.
  - PFringZC mode is far less likely to drop packets than PFring mode, but requires a license from NTOP.
 
@@ -275,7 +275,7 @@ host    pcapdb          capture         127.0.0.1/32            md5
 host    pcapdb          capture         <capture node ip>       md5
 ```
 
-Edit the Search Head's postgresql.conf file so that it listens on it's own IP:
+Edit the Search Head's postgresql.conf file so that it listens on its own IP:
 ```
 listen_addresses = 'localhost,<search head ip>'
 ```
@@ -352,7 +352,7 @@ This has to be set up manually. See above for more information.
 
 ### Celery
 Celery is a system for distributing and scheduling tasks across a network of workers. PcapDB manages
-all of it's communications with the Capture Nodes through Celery tasks, from initiating searches to
+all of its communications with the Capture Nodes through Celery tasks, from initiating searches to
 managing disk arrays. The tasks are assigned and picked up by the appropriate host via RabbitMQ
 messaging queues, and the responses are saved to the search head via the search head's database.
 Celery runs on both the Search Head and all Capture Nodes, though each host subscribes to different
@@ -364,7 +364,7 @@ Celery is configured automatically on system install, and the process is managed
 ### uWSGI and Nginx
 The web interface for PcapDB is built in the Python Django system, which is served via a unix
 socket using uWSGI and persistant Python instances. Nginx handles all of the standard HTTP/HTTPS
-portions of the web service, and passes Django requests to uWSGI via it's socket. (This is a pretty
+portions of the web service, and passes Django requests to uWSGI via its socket. (This is a pretty
 standard way of doing things).
 
  - uWSGI and Nginx are automatically configured on install.
