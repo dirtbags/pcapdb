@@ -19,7 +19,7 @@ On the capture nodes:
 If you're building from source:
  - `apt install -y cmake libnuma-dev libssl-dev libhugetlbfs-dev libpcap-dev`
 
-You'll also need the pfring packages from http://packages.ntop.org . On Ubuntu 18.04 you must modify the /etc/apt/sources.list.d/ntop-stable.list file to change 18.04 default back to 16.04 as no 18.04 packages exist. 
+You'll also need the pfring packages from http://packages.ntop.org . 
  - x86\_64/PF\_RING/pfring 
  - all/pfring-dkms 
 
