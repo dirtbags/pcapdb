@@ -1,3 +1,12 @@
+# Security Notice
+
+This project has not been updated since 2019. There are multiple security vulnerabilities in dependency packages.
+
+Without an investment in upgrading these dependencies,
+this project should be considered
+**for archival use only**.
+
+
 <img src="https://cloud.githubusercontent.com/assets/22897558/22356169/8f6e0b16-e3ec-11e6-8695-2273424c2b06.png" width="200" />
 
 # Overview
